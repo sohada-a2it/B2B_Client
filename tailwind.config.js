@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#FD5621', // আপনার প্রজেক্টের প্রাইমারি কালার
+        primary: '#FD5621', 
         secondary: '#122652',
       },
       fontFamily: {
