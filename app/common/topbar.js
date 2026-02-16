@@ -4,9 +4,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const Topbar = () => {
-  const primaryColor = '#FD5621';
-  const secondaryColor = '#122652';
+const Topbar = () => { 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -57,7 +55,7 @@ const Topbar = () => {
         duration: 0.3,
         ease: "easeInOut"
       }}
-      className="bg-[#122652] text-white py-2 text-sm fixed top-0 left-0 right-0 z-[10000]"
+      className="bg-primary text-third font-bold py-2 text-sm fixed top-0 left-0 right-0 z-[10000]"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between">
@@ -65,14 +63,14 @@ const Topbar = () => {
           {/* Left Section - Address */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4 text-[#FD5621]" />
-              <span className="text-white/90">8825 STANFORD BLVD SUITE 306</span>
+              <MapPin className="w-4 h-4 text-white" />
+              <span className="text-third">8825 STANFORD BLVD SUITE 306</span>
             </div>
             <span className="text-white/40 hidden md:inline">|</span>
-            <span className="text-white/80 hidden md:block">COLUMBIA MD 21045 USA</span>
+            <span className="text-third hidden md:block">COLUMBIA MD 21045 USA</span>
             <motion.button
               whileHover={{ scale: 1.05 }}
-              className="hidden lg:flex items-center space-x-1 text-[#FD5621] hover:text-[#FD5621]/80 font-medium"
+              className="hidden lg:flex items-center space-x-1 text-white font-bold hover:text-third"
             >
               <span>MAP VIEW</span>
               <ChevronRight className="w-4 h-4" />
@@ -86,11 +84,11 @@ const Topbar = () => {
               whileHover={{ x: 5 }}
               className="flex items-center space-x-2 group"
             >
-              <Mail className="w-4 h-4 text-[#FD5621]" />
+              {/* <Mail className="w-4 h-4 text-white" /> */}
               <span className="border-b border-transparent group-hover:border-[#FD5621] transition-all duration-300">
                 CONTACT US
               </span>
-              <ChevronRight className="w-4 h-4 text-[#FD5621] group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </div>
         </div>

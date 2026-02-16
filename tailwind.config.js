@@ -9,8 +9,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#FD5621', 
-        secondary: '#122652',
+        primary: '#E67E22', 
+        secondary: '#fffaf6',
+        third:"#122652",
+        fourth:"#3C719D",
+        fifth:"gray-600",
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

@@ -3,9 +3,7 @@
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, ChevronRight, Facebook, Twitter, Linkedin, Instagram, Globe } from 'lucide-react';
 
-const footer = () => {
-  const primaryColor = '#FD5621';
-  const secondaryColor = '#122652';
+const footer = () => { 
 
   const footerSections = [
     {
@@ -13,8 +11,8 @@ const footer = () => {
       content: (
         <div className="space-y-4">
           <div>
-            <h3 className="font-semibold text-white mb-2">HEAD OFFICE</h3>
-            <p className="text-gray-300 text-sm leading-relaxed">
+            <h3 className="font-semibold text-third mb-2">HEAD OFFICE</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
               8825 STANFORD BLVD<br />
               SUITE 306 COLUMBIA<br />
               MD 21045, United States
@@ -22,32 +20,32 @@ const footer = () => {
           </div>
           
           <div>
-            <h3 className="font-semibold text-white mb-2">PHONE</h3>
-            <a href="tel:+1-647-362-7735" className="text-gray-300 text-sm hover:text-[#FD5621] transition-colors flex items-center gap-2">
+            <h3 className="font-semibold text-third mb-2">PHONE</h3>
+            <a href="tel:+1-647-362-7735" className="text-gray-600 text-sm hover:text-primary transition-colors flex items-center gap-2">
               <Phone className="w-4 h-4" />
               +1-647-362-7735
             </a>
           </div>
           
           <div>
-            <h3 className="font-semibold text-white mb-2">EMAIL</h3>
-            <a href="mailto:info@cargologisticscompany.com" className="text-gray-300 text-sm hover:text-[#FD5621] transition-colors flex items-center gap-2">
+            <h3 className="font-semibold text-third mb-2">EMAIL</h3>
+            <a href="mailto:info@cargologisticscompany.com" className="text-gray-600 text-sm hover:text-primary transition-colors flex items-center gap-2">
               <Mail className="w-4 h-4" />
               info@cargologisticscompany.com
             </a>
           </div>
           
           <div>
-            <h3 className="font-semibold text-white mb-3">SOCIAL CONNECT:</h3>
+            <h3 className="font-semibold text-third mb-3">SOCIAL CONNECT:</h3>
             <div className="flex gap-3">
               {[Facebook, Twitter, Linkedin, Instagram].map((Icon, idx) => (
                 <motion.a
                   key={idx}
                   href="#"
                   whileHover={{ y: -3 }}
-                  className="w-8 h-8 bg-white/10 hover:bg-[#FD5621] rounded-lg flex items-center justify-center transition-colors"
+                  className="w-8 h-8 bg-primary/20 hover:bg-primary hover:text-white rounded-lg flex items-center justify-center transition-colors"
                 >
-                  <Icon className="w-4 h-4 text-white" />
+                  <Icon className="w-4 h-4 text-gray-600" />
                 </motion.a>
               ))}
             </div>
@@ -85,14 +83,14 @@ const footer = () => {
       title: "Work Gallery",
       content: (
         <div>
-          {/* <p className="text-gray-300 text-sm mb-4">
+          {/* <p className="text-gray-600 text-sm mb-4">
             FIND NEAREST BRANCH
           </p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            style={{ backgroundColor: primaryColor }}
-            className="px-6 py-3 rounded-lg text-white font-semibold text-sm hover:shadow-lg transition-shadow inline-flex items-center gap-2"
+            style={{ backgroundColor: gray-600Color }}
+            className="px-6 py-3 rounded-lg text-primary font-semibold text-sm hover:shadow-lg transition-shadow inline-flex items-center gap-2"
           >
             FIND NEAREST BRANCH
             <ChevronRight className="w-4 h-4" />
@@ -111,7 +109,7 @@ const footer = () => {
     <motion.div
       key={item.id}
       whileHover={{ scale: 1.05 }}
-      className="aspect-square bg-white/10 rounded-lg overflow-hidden cursor-pointer"
+      className="aspect-square bg-primary/10 rounded-lg overflow-hidden cursor-pointer"
     >
       <img 
         src={item.src} 
@@ -131,15 +129,10 @@ const footer = () => {
   ];
 
   return (
-    <footer className="bg-[#122652] text-white relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#FD5621]/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#FD5621]/10 rounded-full blur-3xl" />
-      </div>
+    <footer className="bg-secondary text-third relative overflow-hidden"> 
 
       {/* Main Footer */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-4 lg:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {footerSections.map((section, idx) => (
             <motion.div
@@ -151,8 +144,7 @@ const footer = () => {
               <h2 className="text-lg font-bold mb-6 relative inline-block">
                 {section.title}
                 <motion.div
-                  className="absolute -bottom-2 left-0 h-0.5 rounded-full"
-                  style={{ backgroundColor: primaryColor }}
+                  className="absolute -bottom-2 left-0 h-0.5 rounded-full bg-primary" 
                   initial={{ width: 0 }}
                   animate={{ width: '60%' }}
                   transition={{ delay: 0.5 + idx * 0.1 }}
@@ -169,9 +161,9 @@ const footer = () => {
                     >
                       <a
                         href="#"
-                        className="text-gray-300 hover:text-[#FD5621] transition-colors inline-flex items-center gap-2"
+                        className="text-gray-600 hover:text-primary transition-colors inline-flex items-center gap-2"
                       >
-                        <ChevronRight className="w-3 h-3 text-[#FD5621]" />
+                        <ChevronRight className="w-3 h-3 text-primary" />
                         {link}
                       </a>
                     </motion.li>
@@ -185,28 +177,28 @@ const footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4"
+          className=" bg-primary mt-16 pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center gap-4"
         >
-          <p className="text-gray-400 text-sm text-center md:text-left">
+          <p className="text-gray-600 text-sm text-center md:text-left">
             © {new Date().getFullYear()} Cargo Logistics Company. All rights reserved.
           </p>
           
           <div className="flex gap-6 text-sm">
-            <a href="#" className="text-gray-400 hover:text-[#FD5621] transition-colors">
+            <a href="#" className="text-gray-600 hover:text-[#FD5621] transition-colors">
               Privacy Policy
             </a>
-            <a href="#" className="text-gray-400 hover:text-[#FD5621] transition-colors">
+            <a href="#" className="text-gray-600 hover:text-[#FD5621] transition-colors">
               Terms of Service
             </a>
-            <a href="#" className="text-gray-400 hover:text-[#FD5621] transition-colors">
+            <a href="#" className="text-gray-600 hover:text-[#FD5621] transition-colors">
               Cookie Policy
             </a>
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </footer>
   );

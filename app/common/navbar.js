@@ -9,9 +9,7 @@ const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [isTopbarVisible, setIsTopbarVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  const primaryColor = '#122652';
+  const [lastScrollY, setLastScrollY] = useState(0); 
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,7 +42,7 @@ const Navbar = () => {
   const navItems = [
     {
       label: 'Home',
-      href: '#',
+      href: '/',
       icon: <Home className="w-4 h-4" />
     },
     {
@@ -52,8 +50,8 @@ const Navbar = () => {
       href: '#',
       icon: <User className="w-4 h-4" />,
       dropdown: [
-        { label: 'Our Story', href: '#' },
-        { label: 'Mission', href: '#' },
+        { label: 'Our Company', href: '/about/company' },
+        { label: 'History', href: '/about/history' },
         { label: 'Careers', href: '#' },
         { label: 'Awards', href: '#' }
       ]
@@ -129,10 +127,9 @@ const Navbar = () => {
         transition={{ duration: 0.3 }}
         className={`fixed ${navbarTopPosition} left-0 right-0 z-[9999] transition-all duration-300 w-full ${
           scrolled 
-            ? 'bg-secondary py-2 shadow-lg' 
-            : 'bg-white py-4'
-        }`}
-        style={scrolled ? { backgroundColor: primaryColor } : {}}
+            ? 'bg-primary py-2 shadow-lg' 
+            : 'bg-secondary py-4'
+        }`} 
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full">
           <div className="flex items-center justify-between">
@@ -142,7 +139,7 @@ const Navbar = () => {
               whileHover={{ scale: 1.05 }} 
               className="flex items-center space-x-2 flex-shrink-0"
             >
-              <div className="relative overflow-visible">
+              <div className="relative overflow-visible bg-secondary rounded-full p-1 ">
                 <img 
                   src="/images/logo.png" 
                   alt="Cargo Logistics Company" 
@@ -159,7 +156,7 @@ const Navbar = () => {
                     repeatDelay: 2
                   }}
                 >
-                  <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-yellow-400" />
+                  {/* <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-yellow-400" /> */}
                 </motion.div>
               </div>
             </motion.div>
@@ -220,23 +217,30 @@ const Navbar = () => {
 
             {/* Contact Button */}
             <div className="hidden lg:flex items-center space-x-3">
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                style={scrolled ? { backgroundColor: 'white', color: '#FD5621' } : { backgroundColor: '#122652', color: 'white' }}
-                className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300`}
-              >
-                Login 
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                style={scrolled ? { backgroundColor: 'white', color: '#FD5621' } : { backgroundColor: '#122652', color: 'white' }}
-                className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300`}
-              >
-                Track Your Order
-              </motion.button>
-            </div>
+  <motion.button
+    whileHover={{ scale: 1.05, y: -2 }}
+    whileTap={{ scale: 0.95 }}
+    className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white text-third' 
+        : 'bg-fourth text-white hover:bg-primary'
+    }`}
+  >
+    Login 
+  </motion.button>
+  
+  <motion.button
+    whileHover={{ scale: 1.05, y: -2 }} 
+    whileTap={{ scale: 0.95 }}
+    className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white text-third hover:bg-secondary' 
+        : 'bg-fourth text-white hover:bg-primary'
+    }`}
+  >
+    Track Your Order
+  </motion.button>
+</div>
 
             {/* Mobile Menu Button */}
             <motion.button
