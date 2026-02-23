@@ -154,7 +154,7 @@ const ServicesSection = () => {
 
           {/* Main Title with 3D Effect */}
           <div className="relative inline-block">
-            <h1 className="text-6xl md:text-2xl font-bold text-secondary bg-clip-text bg-gradient-to-r from-white via-gray-300 to-white mb-2 animate-fade-in relative z-10">
+            <h1 className="text-6xl md:text-2xl font-bold text-primary bg-clip-text bg-gradient-to-r from-white via-gray-300 to-white mb-2 animate-fade-in relative z-10">
               Explore Our Services
             </h1> 
 

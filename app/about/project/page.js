@@ -1,9 +1,9 @@
 import React from 'react'
-import OurCompany from '@/components/about/company';
+import Project from "@/components/about/project"
 function page() {
   return (
     <div>
-      <OurCompany />
+      <Project/>
     </div>
   )
 }

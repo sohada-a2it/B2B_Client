@@ -52,8 +52,9 @@ const Navbar = () => {
       dropdown: [
         { label: 'Our Company', href: '/about/company' },
         { label: 'History', href: '/about/history' },
-        { label: 'Careers', href: '#' },
-        { label: 'Awards', href: '#' }
+        { label: 'Teams', href: '/about/teams' }, 
+        { label: 'Projects', href: '/about/project' }, 
+        { label: 'Pricing Table', href: '/about/price' }, 
       ]
     },
     {
@@ -61,10 +62,8 @@ const Navbar = () => {
       href: '#',
       icon: <FileText className="w-4 h-4" />,
       dropdown: [
-        { label: 'Team', href: '#' },
-        { label: 'Pricing', href: '#' },
-        { label: 'Testimonials', href: '#' },
-        { label: 'FAQ', href: '#' }
+        { label: 'Industries', href: '/industries' },
+        { label: 'Industries Details', href: '/industries_deatils' }, 
       ]
     },
     {
@@ -74,18 +73,12 @@ const Navbar = () => {
     },
     {
       label: 'Services',
-      href: '#',
-      icon: <Settings className="w-4 h-4" />,
-      dropdown: [
-        { label: 'Consulting', href: '#' },
-        { label: 'Development', href: '#' },
-        { label: 'Marketing', href: '#' },
-        { label: 'Support', href: '#' }
-      ]
+      href: '/service',
+      icon: <Settings className="w-4 h-4" />, 
     },
     {
       label: 'Contact',
-      href: '#',
+      href: '/contact',
       icon: <Mail className="w-4 h-4" />
     }
   ];

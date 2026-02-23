@@ -1,5 +1,5 @@
 import React from 'react'
-import History from '../../components/about/history'
+import History from '@/components/about/history'
 function page() {
   return (
     <div>
