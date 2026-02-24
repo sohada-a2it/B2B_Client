@@ -136,7 +136,7 @@ const Navbar = () => {
                 <img 
                   src="/images/logo.png" 
                   alt="Cargo Logistics Company" 
-                  className="h-12 w-auto" 
+                  className="h-14 w-auto " 
                 />
                 <motion.div
                   animate={{ 

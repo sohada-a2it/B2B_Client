@@ -129,13 +129,13 @@ export default function ShippingProcess() {
             boxShadow: "0 25px 30px -12px rgba(253, 86, 33, 0.25)"
           }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          className="relative bg-white p-6 rounded-xl shadow-lg group-hover:bg-secondary transition-all duration-300"
+          className="relative bg-white p-6 rounded-xl shadow-lg group-hover:bg-fourth transition-all duration-300"
         >
           {/* Arrow (triangle) */}
           <div
             className={`absolute left-1/2 -translate-x-1/2 w-5 h-5 bg-white rotate-45 ${
               isTop ? "-top-2.5" : "-bottom-2.5"
-            } group-hover:bg-secondary transition-colors duration-300`}
+            } group-hover:bg-fourth transition-colors duration-300`}
           />
 
           {/* Default Content */}
