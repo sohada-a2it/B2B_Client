@@ -132,11 +132,11 @@ const Navbar = () => {
               whileHover={{ scale: 1.05 }} 
               className="flex items-center space-x-2 flex-shrink-0"
             >
-              <div className="relative overflow-visible bg-secondary rounded-full p-1 ">
+              <div className="relative overflow-visible bg-secondary rounded-lg p-1 ">
                 <img 
                   src="/images/logo.png" 
                   alt="Cargo Logistics Company" 
-                  className="h-14 w-auto " 
+                  className="h-12 w-auto " 
                 />
                 <motion.div
                   animate={{ 
@@ -219,7 +219,7 @@ const Navbar = () => {
         : 'bg-fourth text-white hover:bg-primary'
     }`}
   >
-    Login 
+    <a href="/auth/login">Login</a>
   </motion.button>
   
   <motion.button
