@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { login } from '@/Api/Authentication';
+import { setAuthToken, setUserDetails } from '@/helper/SessionHelper';
 
 const Button = ({
   children,
@@ -37,7 +38,7 @@ const Button = ({
   return (
     <button
       type={type}
-      className={baseClasses + ' ' + variantClass + ' ' + sizeClass + ' ' + className + ' ' + (disabled || isLoading ? 'opacity-50 cursor-not-allowed' : '')}
+      className={`${baseClasses} ${variantClass} ${sizeClass} ${className} ${(disabled || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
       disabled={disabled || isLoading}
       onClick={onClick}
     >
@@ -110,7 +111,7 @@ const Input = ({
   );
 };
 
-export default function page() {
+export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
@@ -133,6 +134,8 @@ export default function page() {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     return newErrors;
@@ -171,19 +174,43 @@ export default function page() {
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
-        const response = await login(formData.email, formData.password);
+        console.log('Attempting login with:', formData.email);
         
-        if (response.success) {
-          toast.success('Login successful! Redirecting to Profile...', {
+        const response = await login(formData.email, formData.password);
+        console.log('Login response:', response);
+        
+        if (response.success && response.token) {
+          // Save to localStorage
+          console.log('Saving token to localStorage:', response.token);
+          setAuthToken(response.token);
+          
+          const userData = response.data || response.user;
+          console.log('Saving user to localStorage:', userData);
+          setUserDetails(userData);
+          
+          // Dispatch event for navbar to update
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('authChange'));
+          }
+          
+          // Show success message
+          toast.success('Login successful! Redirecting...', {
             position: 'top-right',
             autoClose: 2000,
           });
           
+          // Small delay to ensure localStorage is set
           setTimeout(() => {
-            router.push('/profile');
+            router.push('/');
           }, 2000);
+        } else {
+          toast.error(response.message || 'Invalid email or password', {
+            position: 'top-right',
+            autoClose: 5000,
+          });
         }
       } catch (error) {
+        console.error('Login error:', error);
         toast.error(error.message || 'Invalid email or password', {
           position: 'top-right',
           autoClose: 5000,
@@ -469,6 +496,9 @@ export default function page() {
                   <p>📧 Email: demo@logiswift.com</p>
                   <p>🔑 Password: demo123</p>
                 </div>
+                <p className="text-xs text-blue-600 mt-2">
+                  After login, check browser console and Application tab to verify localStorage
+                </p>
               </div>
 
               {/* Help Link */}
