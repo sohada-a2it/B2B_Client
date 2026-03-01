@@ -145,7 +145,7 @@ const Navbar = () => {
     },
     { 
       label: 'My Shipments', 
-      href: '/shipments', 
+      href: '/my-shipping', 
       icon: <Truck className="w-4 h-4" /> 
     },
     { 
