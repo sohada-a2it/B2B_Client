@@ -1,4 +1,4 @@
-// app/create-booking/page.js
+// app/employee/create-booking/page.js
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,11 +14,57 @@ import {
   ChevronLeft, Truck, Ship, Plane, Phone, Mail, 
   DollarSign, Edit3, Building, Home, Clock,
   Globe, Hash, Tag, Briefcase, Loader2, X, 
-  User, Save,
+  User, Save, Users, Shield, Copy, Download,
   Info
 } from 'lucide-react';
 
-// Compact Button Component
+// ==================== CONSTANTS (from bookingModel) ====================
+
+const SHIPMENT_TYPES = {
+  sea_freight: 'Sea Freight',
+  air_freight: 'Air Freight',
+  inland_trucking: 'Inland Trucking',
+  multimodal: 'Multimodal'
+};
+
+const SHIPMENT_SUB_TYPES = {
+  sea_freight_fcl: 'Sea Freight FCL',
+  sea_freight_lcl: 'Sea Freight LCL',
+  air_freight: 'Air Freight',
+  rail_freight: 'Rail Freight',
+  express_delivery: 'Express Delivery',
+  inland_transport: 'Inland Transport',
+  door_to_door: 'Door to Door'
+};
+
+const PACKAGING_TYPES = [
+  'pallet', 'carton', 'crate', 'wooden_box', 'container',
+  'envelope', 'loose_cargo', 'loose_tires', '20ft_container', '40ft_container'
+];
+
+const ORIGINS = ['China Warehouse', 'Thailand Warehouse'];
+
+const DESTINATIONS = ['USA', 'UK', 'Canada'];
+
+const SHIPPING_MODES = ['DDP', 'DDU', 'FOB', 'CIF'];
+
+const PAYMENT_MODES = ['bank_transfer', 'credit_card', 'cash', 'wire_transfer'];
+
+const COURIER_SERVICE_TYPES = ['standard', 'express', 'overnight', 'economy'];
+
+const CURRENCIES = ['USD', 'GBP', 'CAD', 'THB', 'CNY', 'EUR', 'BDT'];
+
+const PRODUCT_CATEGORIES = [
+  'Electronics', 'Furniture', 'Clothing', 'Machinery', 
+  'Automotive', 'Pharmaceuticals', 'Food', 'Documents',
+  'Tires', 'Chemicals', 'Others'
+];
+
+const COURIER_COMPANIES = ['Cargo Logistics Group', 'DHL', 'FedEx', 'UPS', 'USPS', 'Other'];
+
+// ==================== COMPONENTS ====================
+
+// Button Component
 const Button = ({
   children,
   type = 'button',
@@ -38,7 +84,8 @@ const Button = ({
     secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400 border border-gray-300',
     outline: 'border border-[#2563eb] text-[#2563eb] hover:bg-blue-50 focus:ring-[#2563eb]',
     danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500',
-    success: 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500'
+    success: 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500',
+    warning: 'bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500'
   };
 
   const sizes = {
@@ -70,7 +117,7 @@ const Button = ({
   );
 };
 
-// Compact Input Component
+// Input Component
 const Input = ({
   label,
   type = 'text',
@@ -125,7 +172,7 @@ const Input = ({
   );
 };
 
-// Compact Select Component
+// Select Component
 const Select = ({
   label,
   name,
@@ -181,7 +228,46 @@ const Select = ({
   );
 };
 
-// Step Indicator Component
+// TextArea Component
+const TextArea = ({
+  label,
+  name,
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  error,
+  required = false,
+  rows = 3
+}) => {
+  return (
+    <div className="mb-3">
+      {label && (
+        <label htmlFor={name} className="block text-xs font-medium text-gray-600 mb-1">
+          {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+      )}
+      <textarea
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        rows={rows}
+        className={`
+          w-full px-3 py-2 text-sm border rounded-md shadow-sm
+          focus:outline-none focus:ring-1 focus:ring-[#2563eb] focus:border-[#2563eb]
+          ${error ? 'border-red-300 bg-red-50' : 'border-gray-300'}
+        `}
+      />
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+};
+
+// Step Indicator
 const StepIndicator = ({ step, currentStep, title }) => {
   const isActive = step <= currentStep;
   const isCurrent = step === currentStep;
@@ -202,128 +288,307 @@ const StepIndicator = ({ step, currentStep, title }) => {
   );
 };
 
-// Main Component
-export default function CreateBooking() {
+// Package Card Component
+const PackageCard = ({ item, index, onChange, onRemove, errors }) => {
+  return (
+    <div className="border rounded-md p-3 bg-gray-50 relative">
+      {index > 0 && (
+        <button
+          type="button"
+          onClick={() => onRemove(index)}
+          className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-0.5 hover:bg-red-200 transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+      
+      <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2">
+          <Input
+            label="Description"
+            value={item.description}
+            onChange={(e) => onChange(index, 'description', e.target.value)}
+            placeholder="Product description"
+            required
+            icon={Package}
+            error={errors[`package_desc_${index}`]}
+          />
+        </div>
+
+        <Select
+          label="Packaging Type"
+          value={item.packagingType || 'carton'}
+          onChange={(e) => onChange(index, 'packagingType', e.target.value)}
+          options={PACKAGING_TYPES.map(type => ({ value: type, label: type.replace('_', ' ').toUpperCase() }))}
+          icon={Box}
+        />
+
+        <Input
+          label="Quantity"
+          type="number"
+          value={item.quantity}
+          onChange={(e) => onChange(index, 'quantity', parseInt(e.target.value) || 1)}
+          min="1"
+          required
+          icon={Package}
+          error={errors[`package_qty_${index}`]}
+        />
+
+        <Input
+          label="Weight (kg)"
+          type="number"
+          value={item.weight}
+          onChange={(e) => onChange(index, 'weight', parseFloat(e.target.value) || 0)}
+          min="0.1"
+          step="0.1"
+          required
+          icon={Weight}
+          error={errors[`package_weight_${index}`]}
+        />
+
+        <Input
+          label="Volume (CBM)"
+          type="number"
+          value={item.volume}
+          onChange={(e) => onChange(index, 'volume', parseFloat(e.target.value) || 0)}
+          min="0.001"
+          step="0.001"
+          required
+          icon={Box}
+          error={errors[`package_volume_${index}`]}
+        />
+
+        <div className="col-span-2 grid grid-cols-2 gap-2">
+          <Select
+            label="Product Category"
+            value={item.productCategory || ''}
+            onChange={(e) => onChange(index, 'productCategory', e.target.value)}
+            options={PRODUCT_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+            icon={Tag}
+            required
+          />
+
+          <Input
+            label="HS Code"
+            value={item.hsCode || ''}
+            onChange={(e) => onChange(index, 'hsCode', e.target.value)}
+            placeholder="Optional"
+            icon={Hash}
+          />
+        </div>
+
+        <div className="col-span-2 grid grid-cols-3 gap-2">
+          <Input
+            label="Value Amount"
+            type="number"
+            value={item.value?.amount || 0}
+            onChange={(e) => onChange(index, 'value.amount', parseFloat(e.target.value) || 0)}
+            icon={DollarSign}
+            min="0"
+            step="0.01"
+          />
+
+          <Select
+            label="Currency"
+            value={item.value?.currency || 'USD'}
+            onChange={(e) => onChange(index, 'value.currency', e.target.value)}
+            options={CURRENCIES.map(curr => ({ value: curr, label: curr }))}
+          />
+
+          <div className="flex items-center mt-6">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={item.hazardous || false}
+                onChange={(e) => onChange(index, 'hazardous', e.target.checked)}
+                className="h-3.5 w-3.5 text-[#2563eb] focus:ring-[#2563eb] border-gray-300 rounded"
+              />
+              <span className="ml-1.5 text-xs text-gray-600">Hazardous</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="col-span-2 grid grid-cols-2 gap-2">
+          <Input
+            label="Length (cm)"
+            type="number"
+            value={item.dimensions?.length || 0}
+            onChange={(e) => onChange(index, 'dimensions.length', parseFloat(e.target.value) || 0)}
+            min="0"
+            step="0.1"
+          />
+
+          <Input
+            label="Width (cm)"
+            type="number"
+            value={item.dimensions?.width || 0}
+            onChange={(e) => onChange(index, 'dimensions.width', parseFloat(e.target.value) || 0)}
+            min="0"
+            step="0.1"
+          />
+
+          <Input
+            label="Height (cm)"
+            type="number"
+            value={item.dimensions?.height || 0}
+            onChange={(e) => onChange(index, 'dimensions.height', parseFloat(e.target.value) || 0)}
+            min="0"
+            step="0.1"
+          />
+
+          <Select
+            label="Unit"
+            value={item.dimensions?.unit || 'cm'}
+            onChange={(e) => onChange(index, 'dimensions.unit', e.target.value)}
+            options={[
+              { value: 'cm', label: 'cm' },
+              { value: 'in', label: 'in' }
+            ]}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== MAIN COMPONENT ====================
+
+export default function EmployeeCreateBooking() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [serverErrors, setServerErrors] = useState([]);
+  const [employeeInfo, setEmployeeInfo] = useState(null);
 
-  // Form Data State
-  const [formData, setFormData] = useState({ 
-    customerReference: '',
+  // Form Data State (matching bookingModel schema)
+  const [formData, setFormData] = useState({
+    // Shipment Classification
+    shipmentClassification: {
+      mainType: '',
+      subType: ''
+    },
+    
+    serviceType: 'standard',
+    
+    // Shipment Details
     shipmentDetails: {
-      shipmentType: '',
       origin: '',
       destination: '',
       shippingMode: 'DDU',
-      pickupRequired: false,
-      cargoDetails: [{
+      packageDetails: [{
         description: '',
-        cartons: 1,
+        packagingType: 'carton',
+        quantity: 1,
         weight: 0,
         volume: 0,
+        dimensions: {
+          length: 0,
+          width: 0,
+          height: 0,
+          unit: 'cm'
+        },
         productCategory: '',
         hsCode: '',
-        value: { amount: 0, currency: 'USD' }
+        value: {
+          amount: 0,
+          currency: 'USD'
+        },
+        hazardous: false
       }],
-      totalCartons: 0,
-      totalWeight: 0,
-      totalVolume: 0,
       specialInstructions: '',
-      referenceNumber: '',
-      incoterms: ''
+      referenceNumber: ''
     },
-    pickupAddress: {
-      companyName: '',
-      contactPerson: '',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: '',
-      pickupDate: '',
-      pickupTime: '',
-      specialInstructions: ''
+    
+    // Dates
+    dates: {
+      estimatedDeparture: '',
+      estimatedArrival: ''
     },
-    deliveryAddress: {
-      consigneeName: '',
+    
+    // Payment
+    payment: {
+      mode: 'bank_transfer',
+      currency: 'USD'
+    },
+    
+    // Sender Information
+    sender: {
+      name: '',
       companyName: '',
-      phone: '',
       email: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: '',
+      phone: '',
+      address: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        country: '',
+        postalCode: ''
+      },
+      pickupInstructions: ''
+    },
+    
+    // Receiver Information
+    receiver: {
+      name: '',
+      companyName: '',
+      email: '',
+      phone: '',
+      address: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        country: '',
+        postalCode: ''
+      },
+      deliveryInstructions: '',
       isResidential: false
     },
-    estimatedDepartureDate: '',
-    estimatedArrivalDate: '',
-    quotedAmount: 0,
-    quotedCurrency: 'USD',
-    tags: [],
-    notes: []
+    
+    // Courier Information
+    courier: {
+      company: 'Cargo Logistics Group',
+      serviceType: 'standard'
+    }
   });
 
   // Errors State
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  // Options
-  const shipmentTypes = [
-    { value: 'air_freight', label: 'Air Freight', icon: Plane },
-    { value: 'sea_freight', label: 'Sea Freight', icon: Ship },
-    { value: 'express_courier', label: 'Express Courier', icon: Package }
-  ];
-
-  const origins = [
-    { value: 'China Warehouse', label: 'China' },
-    { value: 'Thailand Warehouse', label: 'Thailand' }, 
-  ];
-
-  const destinations = [
-    { value: 'USA', label: 'USA' },
-    { value: 'UK', label: 'UK' },
-    { value: 'Canada', label: 'Canada' }, 
-  ];
-
-  const shippingModes = [
-    { value: 'DDP', label: 'DDP' },
-    { value: 'DDU', label: 'DDU' },
-    { value: 'FOB', label: 'FOB' },
-    { value: 'CIF', label: 'CIF' }
-  ];
-
-  const productCategories = [
-    'Electronics', 'Furniture', 'Clothing', 'Machinery', 
-    'Automotive', 'Pharmaceuticals', 'Food', 'Others'
-  ];
-
-  const currencies = ['USD', 'GBP', 'CAD', 'THB', 'CNY'];
-
-  // Calculate totals
+  // Load employee info
   useEffect(() => {
-    if (formData.shipmentDetails.cargoDetails.length > 0) {
-      const totals = formData.shipmentDetails.cargoDetails.reduce(
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user && user.role === 'employee') {
+      setEmployeeInfo(user);
+    }
+  }, []);
+
+  // Calculate totals from package details
+  useEffect(() => {
+    if (formData.shipmentDetails.packageDetails.length > 0) {
+      const totals = formData.shipmentDetails.packageDetails.reduce(
         (acc, item) => ({
-          totalCartons: acc.totalCartons + (Number(item.cartons) || 0),
-          totalWeight: acc.totalWeight + (Number(item.weight) || 0),
-          totalVolume: acc.totalVolume + (Number(item.volume) || 0)
+          totalPackages: acc.totalPackages + (Number(item.quantity) || 0),
+          totalWeight: acc.totalWeight + ((Number(item.weight) || 0) * (Number(item.quantity) || 0)),
+          totalVolume: acc.totalVolume + ((Number(item.volume) || 0) * (Number(item.quantity) || 0))
         }),
-        { totalCartons: 0, totalWeight: 0, totalVolume: 0 }
+        { totalPackages: 0, totalWeight: 0, totalVolume: 0 }
       );
 
       setFormData(prev => ({
         ...prev,
-        shipmentDetails: { ...prev.shipmentDetails, ...totals }
+        shipmentDetails: {
+          ...prev.shipmentDetails,
+          totalPackages: totals.totalPackages,
+          totalWeight: totals.totalWeight,
+          totalVolume: totals.totalVolume
+        }
       }));
     }
-  }, [formData.shipmentDetails.cargoDetails]);
+  }, [formData.shipmentDetails.packageDetails]);
 
   // Handle Input Change
   const handleInputChange = (e) => {
@@ -335,6 +600,7 @@ export default function CreateBooking() {
       let temp = current;
       
       for (let i = 0; i < keys.length - 1; i++) {
+        if (!temp[keys[i]]) temp[keys[i]] = {};
         temp = temp[keys[i]];
       }
       
@@ -342,70 +608,100 @@ export default function CreateBooking() {
       return current;
     });
 
-    // Clear error
+    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  // Handle Cargo Change
-  const handleCargoChange = (index, field, value) => {
+  // Handle Package Change
+  const handlePackageChange = (index, field, value) => {
     setFormData(prev => {
       const newData = { ...prev };
+      const packageDetails = [...newData.shipmentDetails.packageDetails];
       
       if (field.includes('.')) {
         const [parent, child] = field.split('.');
-        newData.shipmentDetails.cargoDetails[index][parent][child] = value;
+        if (!packageDetails[index][parent]) packageDetails[index][parent] = {};
+        packageDetails[index][parent][child] = value;
       } else {
-        newData.shipmentDetails.cargoDetails[index][field] = value;
+        packageDetails[index][field] = value;
       }
       
+      newData.shipmentDetails.packageDetails = packageDetails;
       return newData;
     });
   };
 
-  // Add Cargo Item
-  const addCargoItem = () => {
+  // Add Package
+  const addPackage = () => {
     setFormData(prev => ({
       ...prev,
       shipmentDetails: {
         ...prev.shipmentDetails,
-        cargoDetails: [
-          ...prev.shipmentDetails.cargoDetails,
+        packageDetails: [
+          ...prev.shipmentDetails.packageDetails,
           {
             description: '',
-            cartons: 1,
+            packagingType: 'carton',
+            quantity: 1,
             weight: 0,
             volume: 0,
+            dimensions: {
+              length: 0,
+              width: 0,
+              height: 0,
+              unit: 'cm'
+            },
             productCategory: '',
             hsCode: '',
-            value: { amount: 0, currency: 'USD' }
+            value: {
+              amount: 0,
+              currency: 'USD'
+            },
+            hazardous: false
           }
         ]
       }
     }));
   };
 
-  // Remove Cargo Item
-  const removeCargoItem = (index) => {
-    if (formData.shipmentDetails.cargoDetails.length > 1) {
+  // Remove Package
+  const removePackage = (index) => {
+    if (formData.shipmentDetails.packageDetails.length > 1) {
       setFormData(prev => ({
         ...prev,
         shipmentDetails: {
           ...prev.shipmentDetails,
-          cargoDetails: prev.shipmentDetails.cargoDetails.filter((_, i) => i !== index)
+          packageDetails: prev.shipmentDetails.packageDetails.filter((_, i) => i !== index)
         }
       }));
     }
+  };
+
+  // Copy Sender to Receiver
+  const copySenderToReceiver = () => {
+    setFormData(prev => ({
+      ...prev,
+      receiver: {
+        ...prev.sender,
+        deliveryInstructions: prev.receiver.deliveryInstructions,
+        isResidential: prev.receiver.isResidential
+      }
+    }));
+    toast.info('Sender information copied to receiver');
   };
 
   // Validate Form
   const validateForm = () => {
     const newErrors = {};
 
-    // Step 1 validation
-    if (!formData.shipmentDetails.shipmentType) {
-      newErrors['shipmentDetails.shipmentType'] = 'Shipment type is required';
+    // Step 1: Shipment Classification
+    if (!formData.shipmentClassification.mainType) {
+      newErrors['shipmentClassification.mainType'] = 'Main shipment type is required';
+    }
+    if (!formData.shipmentClassification.subType) {
+      newErrors['shipmentClassification.subType'] = 'Shipment sub-type is required';
     }
     if (!formData.shipmentDetails.origin) {
       newErrors['shipmentDetails.origin'] = 'Origin is required';
@@ -413,56 +709,81 @@ export default function CreateBooking() {
     if (!formData.shipmentDetails.destination) {
       newErrors['shipmentDetails.destination'] = 'Destination is required';
     }
-    if (!formData.estimatedDepartureDate) {
-      newErrors.estimatedDepartureDate = 'Departure date is required';
+    if (!formData.dates.estimatedDeparture) {
+      newErrors['dates.estimatedDeparture'] = 'Estimated departure date is required';
     }
-    if (!formData.estimatedArrivalDate) {
-      newErrors.estimatedArrivalDate = 'Arrival date is required';
+    if (!formData.dates.estimatedArrival) {
+      newErrors['dates.estimatedArrival'] = 'Estimated arrival date is required';
     }
 
-    // Check if arrival date is after departure date
-    if (formData.estimatedDepartureDate && formData.estimatedArrivalDate) {
-      if (new Date(formData.estimatedArrivalDate) < new Date(formData.estimatedDepartureDate)) {
-        newErrors.estimatedArrivalDate = 'Arrival date must be after departure date';
+    // Check if arrival date is after departure
+    if (formData.dates.estimatedDeparture && formData.dates.estimatedArrival) {
+      if (new Date(formData.dates.estimatedArrival) < new Date(formData.dates.estimatedDeparture)) {
+        newErrors['dates.estimatedArrival'] = 'Arrival date must be after departure date';
       }
     }
 
-    // Step 2 validation (cargo)
-    formData.shipmentDetails.cargoDetails.forEach((item, index) => {
+    // Step 2: Package Details
+    formData.shipmentDetails.packageDetails.forEach((item, index) => {
       if (!item.description) {
-        newErrors[`cargo_desc_${index}`] = 'Description is required';
+        newErrors[`package_desc_${index}`] = 'Description is required';
       }
-      if (!item.cartons || item.cartons < 1) {
-        newErrors[`cargo_cartons_${index}`] = 'Minimum 1 carton required';
+      if (!item.quantity || item.quantity < 1) {
+        newErrors[`package_qty_${index}`] = 'Minimum 1 quantity required';
       }
       if (!item.weight || item.weight <= 0) {
-        newErrors[`cargo_weight_${index}`] = 'Weight is required';
+        newErrors[`package_weight_${index}`] = 'Weight is required';
       }
       if (!item.volume || item.volume <= 0) {
-        newErrors[`cargo_volume_${index}`] = 'Volume is required';
+        newErrors[`package_volume_${index}`] = 'Volume is required';
+      }
+      if (!item.productCategory) {
+        newErrors[`package_category_${index}`] = 'Product category is required';
       }
     });
 
-    // Step 3 validation
-    if (!formData.deliveryAddress.consigneeName) {
-      newErrors['deliveryAddress.consigneeName'] = 'Consignee name is required';
+    // Step 3: Sender Information
+    if (!formData.sender.name) {
+      newErrors['sender.name'] = 'Sender name is required';
     }
-    if (!formData.deliveryAddress.email) {
-      newErrors['deliveryAddress.email'] = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.deliveryAddress.email)) {
-      newErrors['deliveryAddress.email'] = 'Invalid email format';
+    if (!formData.sender.email) {
+      newErrors['sender.email'] = 'Sender email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.sender.email)) {
+      newErrors['sender.email'] = 'Invalid email format';
     }
-    if (!formData.deliveryAddress.phone) {
-      newErrors['deliveryAddress.phone'] = 'Phone number is required';
+    if (!formData.sender.phone) {
+      newErrors['sender.phone'] = 'Sender phone is required';
     }
-    if (!formData.deliveryAddress.addressLine1) {
-      newErrors['deliveryAddress.addressLine1'] = 'Address is required';
+    if (!formData.sender.address.addressLine1) {
+      newErrors['sender.address.addressLine1'] = 'Address is required';
     }
-    if (!formData.deliveryAddress.city) {
-      newErrors['deliveryAddress.city'] = 'City is required';
+    if (!formData.sender.address.city) {
+      newErrors['sender.address.city'] = 'City is required';
     }
-    if (!formData.deliveryAddress.country) {
-      newErrors['deliveryAddress.country'] = 'Country is required';
+    if (!formData.sender.address.country) {
+      newErrors['sender.address.country'] = 'Country is required';
+    }
+
+    // Step 4: Receiver Information
+    if (!formData.receiver.name) {
+      newErrors['receiver.name'] = 'Receiver name is required';
+    }
+    if (!formData.receiver.email) {
+      newErrors['receiver.email'] = 'Receiver email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.receiver.email)) {
+      newErrors['receiver.email'] = 'Invalid email format';
+    }
+    if (!formData.receiver.phone) {
+      newErrors['receiver.phone'] = 'Receiver phone is required';
+    }
+    if (!formData.receiver.address.addressLine1) {
+      newErrors['receiver.address.addressLine1'] = 'Address is required';
+    }
+    if (!formData.receiver.address.city) {
+      newErrors['receiver.address.city'] = 'City is required';
+    }
+    if (!formData.receiver.address.country) {
+      newErrors['receiver.address.country'] = 'Country is required';
     }
 
     setErrors(newErrors);
@@ -473,26 +794,57 @@ export default function CreateBooking() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (currentStep !== 4) {
-    return;
-  }
+    if (currentStep !== 5) {
+      return;
+    }
 
-  if (!validateForm()) {
-    toast.error('Please fill all required fields');
-    return;
-  }
+    if (!validateForm()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
 
     setIsSubmitting(true);
     setServerErrors([]);
 
     try {
-      // Format data for API
+      // Get current user from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Prepare data for API (matching backend schema)
       const bookingData = {
-        ...formData,
-        bookingNumber: generateBookingNumber(),
-        status: 'draft',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        customer: user._id, // Employee is creating booking, so customer is the employee
+        createdBy: user._id,
+        
+        shipmentClassification: formData.shipmentClassification,
+        serviceType: formData.serviceType,
+        
+        shipmentDetails: {
+          ...formData.shipmentDetails,
+          // totals will be calculated by backend pre-save middleware
+        },
+        
+        dates: {
+          requested: new Date(),
+          estimatedDeparture: formData.dates.estimatedDeparture,
+          estimatedArrival: formData.dates.estimatedArrival
+        },
+        
+        payment: formData.payment,
+        
+        sender: formData.sender,
+        receiver: formData.receiver,
+        
+        courier: formData.courier,
+        
+        status: 'booking_requested',
+        pricingStatus: 'pending',
+        
+        timeline: [{
+          status: 'booking_requested',
+          description: 'Booking created by employee',
+          updatedBy: user._id,
+          timestamp: new Date()
+        }]
       };
 
       const response = await createBooking(bookingData);
@@ -501,12 +853,11 @@ export default function CreateBooking() {
         setShowSuccess(true);
         toast.success('Booking created successfully!');
         
-        // Store in localStorage as backup
-        const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-        localStorage.setItem('bookings', JSON.stringify([...existingBookings, bookingData]));
+        // Clear draft from localStorage
+        localStorage.removeItem('employee_booking_draft');
         
         setTimeout(() => {
-          router.push('/Bookings/all_bookings');
+          router.push('/employee/bookings');
         }, 2000);
       } else {
         setServerErrors([{ msg: response.message || 'Failed to create booking' }]);
@@ -521,49 +872,52 @@ export default function CreateBooking() {
     }
   };
 
-  // Generate Booking Number
-  const generateBookingNumber = () => {
-    const prefix = 'BKG';
-    const timestamp = Date.now().toString().slice(-8);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}${timestamp}${random}`;
-  };
-
   // Next Step
   const nextStep = () => {
     let isValid = true;
     
     if (currentStep === 1) {
-      if (!formData.shipmentDetails.shipmentType || 
+      if (!formData.shipmentClassification.mainType || 
+          !formData.shipmentClassification.subType ||
           !formData.shipmentDetails.origin || 
           !formData.shipmentDetails.destination ||
-          !formData.estimatedDepartureDate ||
-          !formData.estimatedArrivalDate) {
+          !formData.dates.estimatedDeparture ||
+          !formData.dates.estimatedArrival) {
         isValid = false;
         toast.error('Please complete all required fields in step 1');
       }
     } else if (currentStep === 2) {
-      const hasInvalidCargo = formData.shipmentDetails.cargoDetails.some(
-        item => !item.description || !item.cartons || !item.weight || !item.volume
+      const hasInvalidPackage = formData.shipmentDetails.packageDetails.some(
+        item => !item.description || !item.quantity || !item.weight || !item.volume || !item.productCategory
       );
-      if (hasInvalidCargo) {
+      if (hasInvalidPackage) {
         isValid = false;
-        toast.error('Please complete all cargo details');
+        toast.error('Please complete all package details');
       }
     } else if (currentStep === 3) {
-      if (!formData.deliveryAddress.consigneeName ||
-          !formData.deliveryAddress.email ||
-          !formData.deliveryAddress.phone ||
-          !formData.deliveryAddress.addressLine1 ||
-          !formData.deliveryAddress.city ||
-          !formData.deliveryAddress.country) {
+      if (!formData.sender.name ||
+          !formData.sender.email ||
+          !formData.sender.phone ||
+          !formData.sender.address.addressLine1 ||
+          !formData.sender.address.city ||
+          !formData.sender.address.country) {
         isValid = false;
-        toast.error('Please complete all required delivery address fields');
+        toast.error('Please complete all required sender fields');
+      }
+    } else if (currentStep === 4) {
+      if (!formData.receiver.name ||
+          !formData.receiver.email ||
+          !formData.receiver.phone ||
+          !formData.receiver.address.addressLine1 ||
+          !formData.receiver.address.city ||
+          !formData.receiver.address.country) {
+        isValid = false;
+        toast.error('Please complete all required receiver fields');
       }
     }
 
     if (isValid) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     }
   };
 
@@ -575,18 +929,16 @@ export default function CreateBooking() {
   const saveAsDraft = () => {
     const draftData = {
       ...formData,
-      bookingNumber: generateBookingNumber(),
-      status: 'draft',
       savedAt: new Date().toISOString()
     };
     
-    localStorage.setItem('bookingDraft', JSON.stringify(draftData));
+    localStorage.setItem('employee_booking_draft', JSON.stringify(draftData));
     toast.info('Draft saved successfully!');
   };
 
   // Load Draft
   useEffect(() => {
-    const savedDraft = localStorage.getItem('bookingDraft');
+    const savedDraft = localStorage.getItem('employee_booking_draft');
     if (savedDraft) {
       const shouldLoad = window.confirm('Found a saved draft. Would you like to load it?');
       if (shouldLoad) {
@@ -598,27 +950,33 @@ export default function CreateBooking() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - Compact */}
+      {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
               <Link 
-                href="/bookings"
+                href="/employee/bookings"
                 className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
               >
                 <ArrowLeft className="h-4 w-4 text-gray-600" />
               </Link>
               <div>
                 <h1 className="text-base font-semibold text-gray-900 flex items-center">
-                  <Package className="h-4 w-4 mr-1.5 text-[#2563eb]" />
-                  Create New Booking
+                  <Users className="h-4 w-4 mr-1.5 text-[#2563eb]" />
+                  Create Booking (Employee)
                 </h1>
-                <p className="text-xs text-gray-500">Fill in the shipment details</p>
+                <p className="text-xs text-gray-500">Create booking on behalf of customer</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
+              {employeeInfo && (
+                <div className="flex items-center text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md">
+                  <Shield className="h-3 w-3 mr-1" />
+                  {employeeInfo.firstName} {employeeInfo.lastName}
+                </div>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -628,10 +986,10 @@ export default function CreateBooking() {
                 Save Draft
               </Button>
               <span className="text-xs text-gray-500">
-                Step {currentStep}/4
+                Step {currentStep}/5
               </span>
               <div className="flex space-x-1">
-                {[1, 2, 3, 4].map((step) => (
+                {[1, 2, 3, 4, 5].map((step) => (
                   <div
                     key={step}
                     className={`h-1 w-6 rounded-full transition-colors ${
@@ -686,32 +1044,61 @@ export default function CreateBooking() {
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border shadow-sm">
           {/* Step Indicators */}
           <div className="border-b px-4 py-2 bg-gray-50 rounded-t-lg">
-            <div className="flex items-center justify-between max-w-2xl mx-auto">
+            <div className="flex items-center justify-between max-w-3xl mx-auto">
               <StepIndicator step={1} currentStep={currentStep} title="Shipment" />
               <ChevronRight className="h-3 w-3 text-gray-400" />
-              <StepIndicator step={2} currentStep={currentStep} title="Cargo" />
+              <StepIndicator step={2} currentStep={currentStep} title="Packages" />
               <ChevronRight className="h-3 w-3 text-gray-400" />
-              <StepIndicator step={3} currentStep={currentStep} title="Address" />
+              <StepIndicator step={3} currentStep={currentStep} title="Sender" />
               <ChevronRight className="h-3 w-3 text-gray-400" />
-              <StepIndicator step={4} currentStep={currentStep} title="Review" />
+              <StepIndicator step={4} currentStep={currentStep} title="Receiver" />
+              <ChevronRight className="h-3 w-3 text-gray-400" />
+              <StepIndicator step={5} currentStep={currentStep} title="Review" />
             </div>
           </div>
 
           {/* Form Content */}
           <div className="p-4">
-            {/* Step 1: Shipment Info */}
+            {/* Step 1: Shipment Classification */}
             {currentStep === 1 && (
               <div className="space-y-3 animate-fadeIn">
+                <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <Package className="h-4 w-4 mr-1 text-[#2563eb]" />
+                  Shipment Classification
+                </h3>
+
                 <div className="grid grid-cols-2 gap-3">
                   <Select
-                    label="Shipment Type"
-                    name="shipmentDetails.shipmentType"
-                    value={formData.shipmentDetails.shipmentType}
+                    label="Main Shipment Type"
+                    name="shipmentClassification.mainType"
+                    value={formData.shipmentClassification.mainType}
                     onChange={handleInputChange}
-                    options={shipmentTypes}
+                    options={Object.entries(SHIPMENT_TYPES).map(([value, label]) => ({ value, label }))}
+                    required
+                    icon={Truck}
+                    error={errors['shipmentClassification.mainType']}
+                  />
+                  
+                  <Select
+                    label="Shipment Sub-Type"
+                    name="shipmentClassification.subType"
+                    value={formData.shipmentClassification.subType}
+                    onChange={handleInputChange}
+                    options={Object.entries(SHIPMENT_SUB_TYPES).map(([value, label]) => ({ value, label }))}
                     required
                     icon={Package}
-                    error={errors['shipmentDetails.shipmentType']}
+                    error={errors['shipmentClassification.subType']}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Select
+                    label="Service Type"
+                    name="serviceType"
+                    value={formData.serviceType}
+                    onChange={handleInputChange}
+                    options={COURIER_SERVICE_TYPES.map(type => ({ value: type, label: type.toUpperCase() }))}
+                    icon={Briefcase}
                   />
                   
                   <Select
@@ -719,8 +1106,8 @@ export default function CreateBooking() {
                     name="shipmentDetails.shippingMode"
                     value={formData.shipmentDetails.shippingMode}
                     onChange={handleInputChange}
-                    options={shippingModes}
-                    icon={Briefcase}
+                    options={SHIPPING_MODES.map(mode => ({ value: mode, label: mode }))}
+                    icon={Globe}
                   />
                 </div>
 
@@ -730,7 +1117,7 @@ export default function CreateBooking() {
                     name="shipmentDetails.origin"
                     value={formData.shipmentDetails.origin}
                     onChange={handleInputChange}
-                    options={origins}
+                    options={ORIGINS.map(origin => ({ value: origin, label: origin }))}
                     required
                     icon={MapPin}
                     error={errors['shipmentDetails.origin']}
@@ -741,7 +1128,7 @@ export default function CreateBooking() {
                     name="shipmentDetails.destination"
                     value={formData.shipmentDetails.destination}
                     onChange={handleInputChange}
-                    options={destinations}
+                    options={DESTINATIONS.map(dest => ({ value: dest, label: dest }))}
                     required
                     icon={Globe}
                     error={errors['shipmentDetails.destination']}
@@ -750,448 +1137,390 @@ export default function CreateBooking() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Input
-                    label="Departure Date"
+                    label="Estimated Departure"
                     type="date"
-                    name="estimatedDepartureDate"
-                    value={formData.estimatedDepartureDate}
+                    name="dates.estimatedDeparture"
+                    value={formData.dates.estimatedDeparture}
                     onChange={handleInputChange}
                     required
                     icon={Calendar}
-                    error={errors.estimatedDepartureDate}
+                    error={errors['dates.estimatedDeparture']}
                     min={new Date().toISOString().split('T')[0]}
                   />
                   
                   <Input
-                    label="Arrival Date"
+                    label="Estimated Arrival"
                     type="date"
-                    name="estimatedArrivalDate"
-                    value={formData.estimatedArrivalDate}
+                    name="dates.estimatedArrival"
+                    value={formData.dates.estimatedArrival}
                     onChange={handleInputChange}
                     required
                     icon={Calendar}
-                    error={errors.estimatedArrivalDate}
-                    min={formData.estimatedDepartureDate || new Date().toISOString().split('T')[0]}
+                    error={errors['dates.estimatedArrival']}
+                    min={formData.dates.estimatedDeparture || new Date().toISOString().split('T')[0]}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label="Reference No"
-                    name="customerReference"
-                    value={formData.customerReference}
-                    onChange={handleInputChange}
-                    placeholder="Optional"
-                    icon={Hash}
-                  />
-                  
-                  <Input
-                    label="Incoterms"
-                    name="shipmentDetails.incoterms"
-                    value={formData.shipmentDetails.incoterms}
-                    onChange={handleInputChange}
-                    placeholder="e.g., EXW, FOB"
-                    icon={Tag}
-                  />
-                </div>
+                <Input
+                  label="Reference Number"
+                  name="shipmentDetails.referenceNumber"
+                  value={formData.shipmentDetails.referenceNumber}
+                  onChange={handleInputChange}
+                  placeholder="Customer reference (optional)"
+                  icon={Hash}
+                />
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="pickupRequired"
-                    name="shipmentDetails.pickupRequired"
-                    checked={formData.shipmentDetails.pickupRequired}
-                    onChange={handleInputChange}
-                    className="h-3.5 w-3.5 text-[#2563eb] focus:ring-[#2563eb] border-gray-300 rounded"
-                  />
-                  <label htmlFor="pickupRequired" className="ml-2 text-xs text-gray-600">
-                    Pickup required from origin
-                  </label>
-                </div>
+                <Select
+                  label="Payment Mode"
+                  name="payment.mode"
+                  value={formData.payment.mode}
+                  onChange={handleInputChange}
+                  options={PAYMENT_MODES.map(mode => ({ 
+                    value: mode, 
+                    label: mode.replace('_', ' ').toUpperCase() 
+                  }))}
+                  icon={DollarSign}
+                />
 
-                <div className="bg-blue-50 rounded-md p-2 mt-2">
+                <div className="bg-blue-50 rounded-md p-2">
                   <div className="flex items-start">
                     <Info className="h-3.5 w-3.5 text-blue-500 mt-0.5 mr-1.5 flex-shrink-0" />
                     <p className="text-xs text-blue-700">
-                      Fill in the basic shipment information to get started. You can add more details later.
+                      Select the shipment type and origin/destination details
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Step 2: Cargo Details */}
+            {/* Step 2: Package Details */}
             {currentStep === 2 && (
               <div className="space-y-3 animate-fadeIn">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-medium text-gray-700">Cargo Items</h3>
+                  <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                    <Box className="h-4 w-4 mr-1 text-[#2563eb]" />
+                    Package Details
+                  </h3>
                   <span className="text-xs text-gray-500">
-                    {formData.shipmentDetails.cargoDetails.length} item(s)
+                    {formData.shipmentDetails.packageDetails.length} package(s)
                   </span>
                 </div>
 
-                {formData.shipmentDetails.cargoDetails.map((item, index) => (
-                  <div key={index} className="border rounded-md p-3 bg-gray-50 relative">
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeCargoItem(index)}
-                        className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-0.5 hover:bg-red-200 transition-colors"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="col-span-2">
-                        <Input
-                          label="Description"
-                          value={item.description}
-                          onChange={(e) => handleCargoChange(index, 'description', e.target.value)}
-                          placeholder="Product description"
-                          required
-                          icon={Package}
-                          error={errors[`cargo_desc_${index}`]}
-                        />
-                      </div>
-
-                      <Select
-                        label="Category"
-                        value={item.productCategory}
-                        onChange={(e) => handleCargoChange(index, 'productCategory', e.target.value)}
-                        options={productCategories.map(cat => ({ value: cat, label: cat }))}
-                        icon={Tag}
-                      />
-
-                      <Input
-                        label="HS Code"
-                        value={item.hsCode}
-                        onChange={(e) => handleCargoChange(index, 'hsCode', e.target.value)}
-                        placeholder="Optional"
-                        icon={Hash}
-                      />
-
-                      <Input
-                        label="Cartons"
-                        type="number"
-                        value={item.cartons}
-                        onChange={(e) => handleCargoChange(index, 'cartons', parseInt(e.target.value) || 0)}
-                        min="1"
-                        required
-                        icon={Box}
-                        error={errors[`cargo_cartons_${index}`]}
-                      />
-
-                      <Input
-                        label="Weight (kg)"
-                        type="number"
-                        value={item.weight}
-                        onChange={(e) => handleCargoChange(index, 'weight', parseFloat(e.target.value) || 0)}
-                        min="0.1"
-                        step="0.1"
-                        required
-                        icon={Weight}
-                        error={errors[`cargo_weight_${index}`]}
-                      />
-
-                      <Input
-                        label="Volume (CBM)"
-                        type="number"
-                        value={item.volume}
-                        onChange={(e) => handleCargoChange(index, 'volume', parseFloat(e.target.value) || 0)}
-                        min="0.001"
-                        step="0.001"
-                        required
-                        icon={Box}
-                        error={errors[`cargo_volume_${index}`]}
-                      />
-
-                      <div className="col-span-2 grid grid-cols-2 gap-2">
-                        <Input
-                          label="Value"
-                          type="number"
-                          value={item.value.amount}
-                          onChange={(e) => handleCargoChange(index, 'value.amount', parseFloat(e.target.value) || 0)}
-                          icon={DollarSign}
-                          min="0"
-                          step="0.01"
-                        />
-
-                        <Select
-                          label="Currency"
-                          value={item.value.currency}
-                          onChange={(e) => handleCargoChange(index, 'value.currency', e.target.value)}
-                          options={currencies.map(curr => ({ value: curr, label: curr }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                {formData.shipmentDetails.packageDetails.map((item, index) => (
+                  <PackageCard
+                    key={index}
+                    item={item}
+                    index={index}
+                    onChange={handlePackageChange}
+                    onRemove={removePackage}
+                    errors={errors}
+                  />
                 ))}
 
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={addCargoItem}
+                  onClick={addPackage}
                   icon={Plus}
                   className="w-full"
                 >
-                  Add Another Item
+                  Add Another Package
                 </Button>
 
-                {formData.shipmentDetails.cargoDetails.length > 0 && (
-                  <div className="bg-blue-50 rounded-md p-3 mt-2">
+                {formData.shipmentDetails.packageDetails.length > 0 && (
+                  <div className="bg-blue-50 rounded-md p-3">
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <div className="text-xs text-gray-500">Total Cartons</div>
+                        <div className="text-xs text-gray-500">Total Packages</div>
                         <div className="text-sm font-semibold text-[#2563eb]">
-                          {formData.shipmentDetails.totalCartons}
+                          {formData.shipmentDetails.totalPackages || 0}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500">Total Weight</div>
                         <div className="text-sm font-semibold text-[#2563eb]">
-                          {formData.shipmentDetails.totalWeight.toFixed(1)} kg
+                          {(formData.shipmentDetails.totalWeight || 0).toFixed(1)} kg
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500">Total Volume</div>
                         <div className="text-sm font-semibold text-[#2563eb]">
-                          {formData.shipmentDetails.totalVolume.toFixed(3)} CBM
+                          {(formData.shipmentDetails.totalVolume || 0).toFixed(3)} CBM
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
+
+                <TextArea
+                  label="Special Instructions"
+                  name="shipmentDetails.specialInstructions"
+                  value={formData.shipmentDetails.specialInstructions}
+                  onChange={handleInputChange}
+                  placeholder="Any special handling instructions..."
+                  rows={2}
+                />
               </div>
             )}
 
-            {/* Step 3: Addresses */}
+            {/* Step 3: Sender Information */}
             {currentStep === 3 && (
-              <div className="space-y-4 animate-fadeIn">
-                {/* Delivery Address */}
-                <div className="border rounded-md p-3">
-                  <h3 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                    <Home className="h-3.5 w-3.5 mr-1 text-[#2563eb]" />
-                    Delivery Address
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3 animate-fadeIn">
+                <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <User className="h-4 w-4 mr-1 text-[#2563eb]" />
+                  Sender Information
+                </h3>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label="Full Name"
+                    name="sender.name"
+                    value={formData.sender.name}
+                    onChange={handleInputChange}
+                    required
+                    icon={User}
+                    error={errors['sender.name']}
+                  />
+
+                  <Input
+                    label="Company Name"
+                    name="sender.companyName"
+                    value={formData.sender.companyName}
+                    onChange={handleInputChange}
+                    icon={Building}
+                  />
+
+                  <Input
+                    label="Email"
+                    type="email"
+                    name="sender.email"
+                    value={formData.sender.email}
+                    onChange={handleInputChange}
+                    required
+                    icon={Mail}
+                    error={errors['sender.email']}
+                  />
+
+                  <Input
+                    label="Phone"
+                    name="sender.phone"
+                    value={formData.sender.phone}
+                    onChange={handleInputChange}
+                    required
+                    icon={Phone}
+                    error={errors['sender.phone']}
+                  />
+
+                  <div className="col-span-2">
                     <Input
-                      label="Consignee Name"
-                      name="deliveryAddress.consigneeName"
-                      value={formData.deliveryAddress.consigneeName}
+                      label="Address Line 1"
+                      name="sender.address.addressLine1"
+                      value={formData.sender.address.addressLine1}
                       onChange={handleInputChange}
                       required
-                      icon={User}
-                      error={errors['deliveryAddress.consigneeName']}
-                    />
-
-                    <Input
-                      label="Company Name"
-                      name="deliveryAddress.companyName"
-                      value={formData.deliveryAddress.companyName}
-                      onChange={handleInputChange}
-                      icon={Building}
-                    />
-
-                    <Input
-                      label="Phone"
-                      name="deliveryAddress.phone"
-                      value={formData.deliveryAddress.phone}
-                      onChange={handleInputChange}
-                      required
-                      icon={Phone}
-                      error={errors['deliveryAddress.phone']}
-                    />
-
-                    <Input
-                      label="Email"
-                      type="email"
-                      name="deliveryAddress.email"
-                      value={formData.deliveryAddress.email}
-                      onChange={handleInputChange}
-                      required
-                      icon={Mail}
-                      error={errors['deliveryAddress.email']}
-                    />
-
-                    <div className="col-span-2">
-                      <Input
-                        label="Address Line 1"
-                        name="deliveryAddress.addressLine1"
-                        value={formData.deliveryAddress.addressLine1}
-                        onChange={handleInputChange}
-                        required
-                        icon={MapPin}
-                        error={errors['deliveryAddress.addressLine1']}
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <Input
-                        label="Address Line 2"
-                        name="deliveryAddress.addressLine2"
-                        value={formData.deliveryAddress.addressLine2}
-                        onChange={handleInputChange}
-                        icon={MapPin}
-                      />
-                    </div>
-
-                    <Input
-                      label="City"
-                      name="deliveryAddress.city"
-                      value={formData.deliveryAddress.city}
-                      onChange={handleInputChange}
-                      required
-                      error={errors['deliveryAddress.city']}
-                    />
-
-                    <Input
-                      label="State/Province"
-                      name="deliveryAddress.state"
-                      value={formData.deliveryAddress.state}
-                      onChange={handleInputChange}
-                    />
-
-                    <Input
-                      label="Country"
-                      name="deliveryAddress.country"
-                      value={formData.deliveryAddress.country}
-                      onChange={handleInputChange}
-                      required
-                      error={errors['deliveryAddress.country']}
-                    />
-
-                    <Input
-                      label="Postal Code"
-                      name="deliveryAddress.postalCode"
-                      value={formData.deliveryAddress.postalCode}
-                      onChange={handleInputChange}
+                      icon={MapPin}
+                      error={errors['sender.address.addressLine1']}
                     />
                   </div>
 
-                  <div className="mt-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="deliveryAddress.isResidential"
-                        checked={formData.deliveryAddress.isResidential}
-                        onChange={handleInputChange}
-                        className="h-3.5 w-3.5 text-[#2563eb] focus:ring-[#2563eb] border-gray-300 rounded"
-                      />
-                      <span className="ml-2 text-xs text-gray-600">This is a residential address</span>
-                    </label>
+                  <div className="col-span-2">
+                    <Input
+                      label="Address Line 2"
+                      name="sender.address.addressLine2"
+                      value={formData.sender.address.addressLine2}
+                      onChange={handleInputChange}
+                      icon={MapPin}
+                    />
                   </div>
+
+                  <Input
+                    label="City"
+                    name="sender.address.city"
+                    value={formData.sender.address.city}
+                    onChange={handleInputChange}
+                    required
+                    error={errors['sender.address.city']}
+                  />
+
+                  <Input
+                    label="State/Province"
+                    name="sender.address.state"
+                    value={formData.sender.address.state}
+                    onChange={handleInputChange}
+                  />
+
+                  <Input
+                    label="Country"
+                    name="sender.address.country"
+                    value={formData.sender.address.country}
+                    onChange={handleInputChange}
+                    required
+                    error={errors['sender.address.country']}
+                  />
+
+                  <Input
+                    label="Postal Code"
+                    name="sender.address.postalCode"
+                    value={formData.sender.address.postalCode}
+                    onChange={handleInputChange}
+                  />
                 </div>
 
-                {/* Pickup Address (if required) */}
-                {formData.shipmentDetails.pickupRequired && (
-                  <div className="border rounded-md p-3">
-                    <h3 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                      <Building className="h-3.5 w-3.5 mr-1 text-[#2563eb]" />
-                      Pickup Address
-                    </h3>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        label="Company Name"
-                        name="pickupAddress.companyName"
-                        value={formData.pickupAddress.companyName}
-                        onChange={handleInputChange}
-                        icon={Building}
-                      />
-
-                      <Input
-                        label="Contact Person"
-                        name="pickupAddress.contactPerson"
-                        value={formData.pickupAddress.contactPerson}
-                        onChange={handleInputChange}
-                        icon={User}
-                      />
-
-                      <Input
-                        label="Phone"
-                        name="pickupAddress.phone"
-                        value={formData.pickupAddress.phone}
-                        onChange={handleInputChange}
-                        icon={Phone}
-                      />
-
-                      <div className="col-span-2">
-                        <Input
-                          label="Address Line 1"
-                          name="pickupAddress.addressLine1"
-                          value={formData.pickupAddress.addressLine1}
-                          onChange={handleInputChange}
-                          icon={MapPin}
-                        />
-                      </div>
-
-                      <div className="col-span-2">
-                        <Input
-                          label="Address Line 2"
-                          name="pickupAddress.addressLine2"
-                          value={formData.pickupAddress.addressLine2}
-                          onChange={handleInputChange}
-                          icon={MapPin}
-                        />
-                      </div>
-
-                      <Input
-                        label="City"
-                        name="pickupAddress.city"
-                        value={formData.pickupAddress.city}
-                        onChange={handleInputChange}
-                      />
-
-                      <Input
-                        label="State/Province"
-                        name="pickupAddress.state"
-                        value={formData.pickupAddress.state}
-                        onChange={handleInputChange}
-                      />
-
-                      <Input
-                        label="Country"
-                        name="pickupAddress.country"
-                        value={formData.pickupAddress.country}
-                        onChange={handleInputChange}
-                      />
-
-                      <Input
-                        label="Postal Code"
-                        name="pickupAddress.postalCode"
-                        value={formData.pickupAddress.postalCode}
-                        onChange={handleInputChange}
-                      />
-
-                      <Input
-                        label="Pickup Date"
-                        type="date"
-                        name="pickupAddress.pickupDate"
-                        value={formData.pickupAddress.pickupDate}
-                        onChange={handleInputChange}
-                        icon={Calendar}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-
-                      <Input
-                        label="Pickup Time"
-                        type="time"
-                        name="pickupAddress.pickupTime"
-                        value={formData.pickupAddress.pickupTime}
-                        onChange={handleInputChange}
-                        icon={Clock}
-                      />
-                    </div>
-                  </div>
-                )}
+                <TextArea
+                  label="Pickup Instructions"
+                  name="sender.pickupInstructions"
+                  value={formData.sender.pickupInstructions}
+                  onChange={handleInputChange}
+                  placeholder="Special pickup instructions..."
+                  rows={2}
+                />
               </div>
             )}
 
-            {/* Step 4: Review */}
+            {/* Step 4: Receiver Information */}
             {currentStep === 4 && (
               <div className="space-y-3 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                    <Users className="h-4 w-4 mr-1 text-[#2563eb]" />
+                    Receiver Information
+                  </h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={copySenderToReceiver}
+                    icon={Copy}
+                  >
+                    Copy from Sender
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label="Full Name"
+                    name="receiver.name"
+                    value={formData.receiver.name}
+                    onChange={handleInputChange}
+                    required
+                    icon={User}
+                    error={errors['receiver.name']}
+                  />
+
+                  <Input
+                    label="Company Name"
+                    name="receiver.companyName"
+                    value={formData.receiver.companyName}
+                    onChange={handleInputChange}
+                    icon={Building}
+                  />
+
+                  <Input
+                    label="Email"
+                    type="email"
+                    name="receiver.email"
+                    value={formData.receiver.email}
+                    onChange={handleInputChange}
+                    required
+                    icon={Mail}
+                    error={errors['receiver.email']}
+                  />
+
+                  <Input
+                    label="Phone"
+                    name="receiver.phone"
+                    value={formData.receiver.phone}
+                    onChange={handleInputChange}
+                    required
+                    icon={Phone}
+                    error={errors['receiver.phone']}
+                  />
+
+                  <div className="col-span-2">
+                    <Input
+                      label="Address Line 1"
+                      name="receiver.address.addressLine1"
+                      value={formData.receiver.address.addressLine1}
+                      onChange={handleInputChange}
+                      required
+                      icon={MapPin}
+                      error={errors['receiver.address.addressLine1']}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Input
+                      label="Address Line 2"
+                      name="receiver.address.addressLine2"
+                      value={formData.receiver.address.addressLine2}
+                      onChange={handleInputChange}
+                      icon={MapPin}
+                    />
+                  </div>
+
+                  <Input
+                    label="City"
+                    name="receiver.address.city"
+                    value={formData.receiver.address.city}
+                    onChange={handleInputChange}
+                    required
+                    error={errors['receiver.address.city']}
+                  />
+
+                  <Input
+                    label="State/Province"
+                    name="receiver.address.state"
+                    value={formData.receiver.address.state}
+                    onChange={handleInputChange}
+                  />
+
+                  <Input
+                    label="Country"
+                    name="receiver.address.country"
+                    value={formData.receiver.address.country}
+                    onChange={handleInputChange}
+                    required
+                    error={errors['receiver.address.country']}
+                  />
+
+                  <Input
+                    label="Postal Code"
+                    name="receiver.address.postalCode"
+                    value={formData.receiver.address.postalCode}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isResidential"
+                    name="receiver.isResidential"
+                    checked={formData.receiver.isResidential}
+                    onChange={handleInputChange}
+                    className="h-3.5 w-3.5 text-[#2563eb] focus:ring-[#2563eb] border-gray-300 rounded"
+                  />
+                  <label htmlFor="isResidential" className="ml-2 text-xs text-gray-600">
+                    This is a residential address
+                  </label>
+                </div>
+
+                <TextArea
+                  label="Delivery Instructions"
+                  name="receiver.deliveryInstructions"
+                  value={formData.receiver.deliveryInstructions}
+                  onChange={handleInputChange}
+                  placeholder="Special delivery instructions..."
+                  rows={2}
+                />
+              </div>
+            )}
+
+            {/* Step 5: Review & Submit */}
+            {currentStep === 5 && (
+              <div className="space-y-3 animate-fadeIn">
+                {/* Shipment Overview */}
                 <div className="bg-gray-50 rounded-md p-3">
                   <h3 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
                     <Package className="h-3.5 w-3.5 mr-1 text-[#2563eb]" />
@@ -1199,10 +1528,20 @@ export default function CreateBooking() {
                   </h3>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-gray-500">Type:</span>{' '}
+                      <span className="text-gray-500">Main Type:</span>{' '}
                       <span className="font-medium">
-                        {shipmentTypes.find(t => t.value === formData.shipmentDetails.shipmentType)?.label || 'N/A'}
+                        {SHIPMENT_TYPES[formData.shipmentClassification.mainType] || 'N/A'}
                       </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Sub-Type:</span>{' '}
+                      <span className="font-medium">
+                        {SHIPMENT_SUB_TYPES[formData.shipmentClassification.subType] || 'N/A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Service:</span>{' '}
+                      <span className="font-medium">{formData.serviceType.toUpperCase()}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Mode:</span>{' '}
@@ -1218,115 +1557,137 @@ export default function CreateBooking() {
                     </div>
                     <div>
                       <span className="text-gray-500">Departure:</span>{' '}
-                      <span className="font-medium">{new Date(formData.estimatedDepartureDate).toLocaleDateString()}</span>
+                      <span className="font-medium">
+                        {new Date(formData.dates.estimatedDeparture).toLocaleDateString()}
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-500">Arrival:</span>{' '}
-                      <span className="font-medium">{new Date(formData.estimatedArrivalDate).toLocaleDateString()}</span>
+                      <span className="font-medium">
+                        {new Date(formData.dates.estimatedArrival).toLocaleDateString()}
+                      </span>
                     </div>
-                    {formData.customerReference && (
+                    {formData.shipmentDetails.referenceNumber && (
                       <div className="col-span-2">
                         <span className="text-gray-500">Reference:</span>{' '}
-                        <span className="font-medium">{formData.customerReference}</span>
+                        <span className="font-medium">{formData.shipmentDetails.referenceNumber}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
+                {/* Packages Summary */}
                 <div className="bg-gray-50 rounded-md p-3">
                   <h3 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
                     <Box className="h-3.5 w-3.5 mr-1 text-[#2563eb]" />
-                    Cargo Summary
+                    Packages Summary
                   </h3>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {formData.shipmentDetails.cargoDetails.map((item, index) => (
+                    {formData.shipmentDetails.packageDetails.map((item, index) => (
                       <div key={index} className="text-xs border-b last:border-0 pb-1 last:pb-0">
                         <div className="font-medium">{item.description}</div>
                         <div className="text-gray-500 flex justify-between">
-                          <span>{item.cartons} ctns | {item.weight} kg | {item.volume} CBM</span>
+                          <span>
+                            {item.quantity} × {item.packagingType} | 
+                            {item.weight} kg | {item.volume} CBM
+                          </span>
                           {item.value.amount > 0 && (
-                            <span className="font-medium">{item.value.currency} {item.value.amount.toLocaleString()}</span>
+                            <span className="font-medium">
+                              {item.value.currency} {item.value.amount.toLocaleString()}
+                            </span>
                           )}
                         </div>
+                        {item.hazardous && (
+                          <span className="text-xs text-red-500">⚠️ Hazardous Material</span>
+                        )}
                       </div>
                     ))}
                   </div>
                   <div className="mt-2 pt-2 border-t grid grid-cols-3 gap-2 text-xs">
                     <div>
-                      <span className="text-gray-500">Total Cartons:</span>{' '}
-                      <span className="font-medium">{formData.shipmentDetails.totalCartons}</span>
+                      <span className="text-gray-500">Total Packages:</span>{' '}
+                      <span className="font-medium">{formData.shipmentDetails.totalPackages || 0}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Total Weight:</span>{' '}
-                      <span className="font-medium">{formData.shipmentDetails.totalWeight.toFixed(1)} kg</span>
+                      <span className="font-medium">
+                        {(formData.shipmentDetails.totalWeight || 0).toFixed(1)} kg
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-500">Total Volume:</span>{' '}
-                      <span className="font-medium">{formData.shipmentDetails.totalVolume.toFixed(3)} CBM</span>
+                      <span className="font-medium">
+                        {(formData.shipmentDetails.totalVolume || 0).toFixed(3)} CBM
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-md p-3">
-                  <h3 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                    <Home className="h-3.5 w-3.5 mr-1 text-[#2563eb]" />
-                    Delivery Address
-                  </h3>
-                  <div className="text-xs">
-                    <p className="font-medium">{formData.deliveryAddress.consigneeName}</p>
-                    {formData.deliveryAddress.companyName && (
-                      <p className="text-gray-600">{formData.deliveryAddress.companyName}</p>
-                    )}
-                    <p className="text-gray-600">{formData.deliveryAddress.addressLine1}</p>
-                    {formData.deliveryAddress.addressLine2 && (
-                      <p className="text-gray-600">{formData.deliveryAddress.addressLine2}</p>
-                    )}
-                    <p className="text-gray-600">
-                      {formData.deliveryAddress.city}
-                      {formData.deliveryAddress.state && `, ${formData.deliveryAddress.state}`}
-                      {formData.deliveryAddress.postalCode && ` - ${formData.deliveryAddress.postalCode}`}
-                    </p>
-                    <p className="text-gray-600">{formData.deliveryAddress.country}</p>
-                    <p className="text-gray-600 mt-1">
-                      <span className="text-gray-500">Phone:</span> {formData.deliveryAddress.phone}<br />
-                      <span className="text-gray-500">Email:</span> {formData.deliveryAddress.email}
-                    </p>
-                    {formData.deliveryAddress.isResidential && (
-                      <p className="text-xs text-blue-600 mt-1">🏠 Residential Address</p>
-                    )}
-                  </div>
-                </div>
-
-                {formData.shipmentDetails.pickupRequired && (
-                  <div className="bg-gray-50 rounded-md p-3">
-                    <h3 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                      <Building className="h-3.5 w-3.5 mr-1 text-[#2563eb]" />
-                      Pickup Address
+                {/* Sender & Receiver Summary */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 rounded-md p-2">
+                    <h3 className="text-xs font-medium text-gray-700 mb-1 flex items-center">
+                      <User className="h-3 w-3 mr-1 text-[#2563eb]" />
+                      Sender
                     </h3>
                     <div className="text-xs">
-                      <p className="font-medium">{formData.pickupAddress.companyName || formData.pickupAddress.contactPerson}</p>
-                      {formData.pickupAddress.contactPerson && (
-                        <p className="text-gray-600">Contact: {formData.pickupAddress.contactPerson}</p>
+                      <p className="font-medium">{formData.sender.name}</p>
+                      {formData.sender.companyName && (
+                        <p className="text-gray-600">{formData.sender.companyName}</p>
                       )}
-                      <p className="text-gray-600">{formData.pickupAddress.addressLine1}</p>
-                      {formData.pickupAddress.addressLine2 && (
-                        <p className="text-gray-600">{formData.pickupAddress.addressLine2}</p>
-                      )}
-                      <p className="text-gray-600">
-                        {formData.pickupAddress.city}
-                        {formData.pickupAddress.state && `, ${formData.pickupAddress.state}`}
+                      <p className="text-gray-600">{formData.sender.email}</p>
+                      <p className="text-gray-600">{formData.sender.phone}</p>
+                      <p className="text-gray-600 mt-1">
+                        {formData.sender.address.addressLine1}<br />
+                        {formData.sender.address.city}, {formData.sender.address.country}
                       </p>
-                      <p className="text-gray-600">{formData.pickupAddress.country}</p>
-                      {formData.pickupAddress.phone && (
-                        <p className="text-gray-600 mt-1">📞 {formData.pickupAddress.phone}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-md p-2">
+                    <h3 className="text-xs font-medium text-gray-700 mb-1 flex items-center">
+                      <Users className="h-3 w-3 mr-1 text-[#2563eb]" />
+                      Receiver
+                    </h3>
+                    <div className="text-xs">
+                      <p className="font-medium">{formData.receiver.name}</p>
+                      {formData.receiver.companyName && (
+                        <p className="text-gray-600">{formData.receiver.companyName}</p>
                       )}
-                      {formData.pickupAddress.pickupDate && (
-                        <p className="text-gray-600 mt-1">
-                          📅 Pickup: {new Date(formData.pickupAddress.pickupDate).toLocaleDateString()}
-                          {formData.pickupAddress.pickupTime && ` at ${formData.pickupAddress.pickupTime}`}
-                        </p>
+                      <p className="text-gray-600">{formData.receiver.email}</p>
+                      <p className="text-gray-600">{formData.receiver.phone}</p>
+                      <p className="text-gray-600 mt-1">
+                        {formData.receiver.address.addressLine1}<br />
+                        {formData.receiver.address.city}, {formData.receiver.address.country}
+                      </p>
+                      {formData.receiver.isResidential && (
+                        <p className="text-xs text-blue-600 mt-1">🏠 Residential</p>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                {/* Special Instructions */}
+                {(formData.shipmentDetails.specialInstructions || 
+                  formData.sender.pickupInstructions || 
+                  formData.receiver.deliveryInstructions) && (
+                  <div className="bg-gray-50 rounded-md p-2">
+                    <h3 className="text-xs font-medium text-gray-700 mb-1">Special Instructions</h3>
+                    {formData.shipmentDetails.specialInstructions && (
+                      <p className="text-xs text-gray-600">
+                        <span className="font-medium">Shipment:</span> {formData.shipmentDetails.specialInstructions}
+                      </p>
+                    )}
+                    {formData.sender.pickupInstructions && (
+                      <p className="text-xs text-gray-600">
+                        <span className="font-medium">Pickup:</span> {formData.sender.pickupInstructions}
+                      </p>
+                    )}
+                    {formData.receiver.deliveryInstructions && (
+                      <p className="text-xs text-gray-600">
+                        <span className="font-medium">Delivery:</span> {formData.receiver.deliveryInstructions}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1334,7 +1695,7 @@ export default function CreateBooking() {
                   <div className="flex items-center">
                     <CheckCircle className="h-3.5 w-3.5 text-green-500 mr-1.5" />
                     <p className="text-xs text-green-700">
-                      Please review all information before submitting. You can save as draft or create booking.
+                      Please review all information before submitting. Booking will be created with status "booking_requested".
                     </p>
                   </div>
                 </div>
@@ -1357,7 +1718,7 @@ export default function CreateBooking() {
                 <div></div>
               )}
 
-              {currentStep < 4 ? (
+              {currentStep < 5 ? (
                 <Button
                   type="button"
                   variant="primary"
@@ -1374,7 +1735,7 @@ export default function CreateBooking() {
                   variant="success"
                   size="sm"
                   isLoading={isSubmitting}
-                  icon={Save}
+                  icon={Send}
                 >
                   Create Booking
                 </Button>
@@ -1386,10 +1747,11 @@ export default function CreateBooking() {
         {/* Progress Summary */}
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-500">
-            {currentStep === 1 && "📦 Step 1: Enter basic shipment information"}
-            {currentStep === 2 && "📦 Step 2: Add cargo details"}
-            {currentStep === 3 && "📦 Step 3: Enter delivery and pickup addresses"}
-            {currentStep === 4 && "📦 Step 4: Review and confirm your booking"}
+            {currentStep === 1 && "📦 Step 1: Select shipment type and route"}
+            {currentStep === 2 && "📦 Step 2: Add package details"}
+            {currentStep === 3 && "📦 Step 3: Enter sender information"}
+            {currentStep === 4 && "📦 Step 4: Enter receiver information"}
+            {currentStep === 5 && "📦 Step 5: Review and submit booking"}
           </p>
         </div>
       </div>
