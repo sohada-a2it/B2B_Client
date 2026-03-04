@@ -125,7 +125,7 @@ export const updatePriceQuote = async (bookingId, quoteData) => {
 // Endpoint: PUT /bookings/:id/accept
 export const acceptQuote = async (bookingId, notes = '') => {
   try {
-    const response = await axiosInstance.put(`/bookings/${bookingId}/accept`, { notes });
+    const response = await axiosInstance.put(`/booking/${bookingId}/accept`, { notes });
     
     if (response.data.success) {
       return {
@@ -350,7 +350,7 @@ export const getMyBookingQuote = async (bookingId) => {
 // Endpoint: GET /bookings/my-bookings/summary
 export const getMyBookingsSummary = async () => {
   try {
-    const response = await axiosInstance.get('/bookings/my-bookings/summary');
+    const response = await axiosInstance.get('/my-bookings/summary');
     
     if (response.data.success) {
       return {
