@@ -301,7 +301,7 @@ const Navbar = () => {
                   <motion.button
                     whileHover={{ scale: 1.05, y: -2 }} 
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => router.push('/track-order')}
+                    onClick={() => router.push('/tracking-number')}
                     className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 ${
                       scrolled 
                         ? 'bg-white text-third' 
@@ -524,7 +524,7 @@ const Navbar = () => {
                   {/* Mobile Contact */}
                   <div className="mt-4 pt-4 border-t px-4">
                     <button
-                      onClick={() => router.push('/track-order')}
+                      onClick={() => router.push('/tracking-number')}
                       style={{ backgroundColor: '#122652' }}
                       className="w-full text-white py-3.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300 mb-2"
                     >

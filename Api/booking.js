@@ -377,7 +377,7 @@ export const getMyBookingsSummary = async () => {
 // Endpoint: GET /bookings/track/:trackingNumber
 export const trackByNumber = async (trackingNumber) => {
   try {
-    const response = await axiosInstance.get(`/bookings/track/${trackingNumber}`);
+    const response = await axiosInstance.get(`/track/${trackingNumber}`);
     
     if (response.data.success) {
       return {
