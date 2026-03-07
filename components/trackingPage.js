@@ -511,61 +511,63 @@ const formatAddress = (address) => {
               )}
 
               {/* Details Tab */}
-              {activeTab === 'details' && (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Sender Info */}
-                    {trackingData.sender && (
-                      <div>
-                        <h3 className="font-medium mb-3 flex items-center">
-                          <User className="h-4 w-4 text-orange-500 mr-2" />
-                          Sender Information
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                          <p className="font-medium">{trackingData.sender.name || 'N/A'}</p>
-                          {trackingData.sender.companyName && (
-                            <p className="text-sm text-gray-600">{trackingData.sender.companyName}</p>
-                          )}
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <Mail className="h-3 w-3 mr-1" /> {trackingData.sender.email || 'N/A'}
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <Phone className="h-3 w-3 mr-1" /> {trackingData.sender.phone || 'N/A'}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.sender.address) || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+             {activeTab === 'details' && (
+  <div className="p-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Sender Info */}
+      {trackingData.sender && (
+        <div>
+          <h3 className="font-medium mb-3 flex items-center">
+            <User className="h-4 w-4 text-orange-500 mr-2" />
+            Sender Information
+          </h3>
+          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+            <p className="font-medium">{trackingData.sender.name || 'N/A'}</p>
+            {trackingData.sender.companyName && (
+              <p className="text-sm text-gray-600">{trackingData.sender.companyName}</p>
+            )}
+            <p className="text-sm text-gray-500 flex items-center">
+              <Mail className="h-3 w-3 mr-1" /> {trackingData.sender.email || 'N/A'}
+            </p>
+            <p className="text-sm text-gray-500 flex items-center">
+              <Phone className="h-3 w-3 mr-1" /> {trackingData.sender.phone || 'N/A'}
+            </p>
+            {/* FIX: Use formatAddress here */}
+            <p className="text-sm text-gray-500">
+              <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.sender.address)}
+            </p>
+          </div>
+        </div>
+      )}
 
-                    {/* Receiver Info */}
-                    {trackingData.receiver && (
-                      <div>
-                        <h3 className="font-medium mb-3 flex items-center">
-                          <User className="h-4 w-4 text-orange-500 mr-2" />
-                          Receiver Information
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                          <p className="font-medium">{trackingData.receiver.name || 'N/A'}</p>
-                          {trackingData.receiver.companyName && (
-                            <p className="text-sm text-gray-600">{trackingData.receiver.companyName}</p>
-                          )}
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <Mail className="h-3 w-3 mr-1" /> {trackingData.receiver.email || 'N/A'}
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <Phone className="h-3 w-3 mr-1" /> {trackingData.receiver.phone || 'N/A'}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            <MapPin className="h-3 w-3 inline mr-1" /> {trackingData.receiver.address || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+      {/* Receiver Info */}
+      {trackingData.receiver && (
+        <div>
+          <h3 className="font-medium mb-3 flex items-center">
+            <User className="h-4 w-4 text-orange-500 mr-2" />
+            Receiver Information
+          </h3>
+          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+            <p className="font-medium">{trackingData.receiver.name || 'N/A'}</p>
+            {trackingData.receiver.companyName && (
+              <p className="text-sm text-gray-600">{trackingData.receiver.companyName}</p>
+            )}
+            <p className="text-sm text-gray-500 flex items-center">
+              <Mail className="h-3 w-3 mr-1" /> {trackingData.receiver.email || 'N/A'}
+            </p>
+            <p className="text-sm text-gray-500 flex items-center">
+              <Phone className="h-3 w-3 mr-1" /> {trackingData.receiver.phone || 'N/A'}
+            </p>
+            {/* FIX: Use formatAddress here */}
+            <p className="text-sm text-gray-500">
+              <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.receiver.address)}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+)}
             </div>
           </div>
         )}
