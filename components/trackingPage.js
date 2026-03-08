@@ -255,7 +255,7 @@ const formatAddress = (address) => {
                   <p className="font-medium text-lg">{getRouteDestination()}</p>
                   {getEstimatedArrival() && (
                     <p className="text-xs text-gray-400">
-                      ETA: {formatDate(getEstimatedArrival())}
+                      {formatDate(getEstimatedArrival())}
                     </p>
                   )}
                 </div>
