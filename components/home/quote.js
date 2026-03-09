@@ -22,14 +22,27 @@ export default function RequestQuote() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Dropdown options
+  const originOptions = ['China', 'Thailand'];
+  const destinationOptions = ['USA', 'Canada', 'UK'];
+  const freightTypeOptions = [
+    'Sea Freight (FCL)',
+    'Sea Freight (LCL)',
+    'Air Freight',
+    'Rail Freight',
+    'Express Delivery',
+    'Inland Transport',
+    'Door to Door'
+  ];
+
   // Simple validation function
   const validateForm = () => {
     const newErrors = {};
 
     // Required fields validation
-    if (!formData.origin.trim()) newErrors.origin = 'Origin is required';
-    if (!formData.destination.trim()) newErrors.destination = 'Destination is required';
-    if (!formData.freightType.trim()) newErrors.freightType = 'Freight type is required';
+    if (!formData.origin) newErrors.origin = 'Please select origin';
+    if (!formData.destination) newErrors.destination = 'Please select destination';
+    if (!formData.freightType) newErrors.freightType = 'Please select freight type';
     if (!formData.weight.trim()) newErrors.weight = 'Weight is required';
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
@@ -48,7 +61,7 @@ export default function RequestQuote() {
       newErrors.phone = 'Invalid phone number';
     }
 
-    // Weight validation (optional format check)
+    // Weight validation
     if (formData.weight && !/^\d*\.?\d+\s*(kg|g|lb|lbs)?$/.test(formData.weight)) {
       newErrors.weight = 'Use format: 10kg, 5.5lbs';
     }
@@ -75,7 +88,7 @@ export default function RequestQuote() {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // Clear error for this field when user starts typing
+    // Clear error for this field when user selects/types
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -85,29 +98,28 @@ export default function RequestQuote() {
     }
   };
 
-  // Handle blur
-  const handleBlur = (field) => {
-    // Trigger validation on blur for required fields
-    if (!formData[field] && ['origin', 'destination', 'freightType', 'weight', 'name', 'email', 'phone', 'address'].includes(field)) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: `${field} is required`
-      }));
-    }
-  };
-
   // Handle form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Handle form submit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (validateForm()) {
+    setIsSubmitting(true);
     
-    if (validateForm()) {
-      setIsSubmitting(true);
-      
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Form submitted:', formData);
-        setIsSubmitting(false);
+    try {
+      const response = await fetch('/api/request-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
         setSubmitSuccess(true);
+        console.log('Quote ID:', result.quoteId); // optional
         
         // Reset form after success
         setTimeout(() => {
@@ -119,93 +131,110 @@ export default function RequestQuote() {
           });
           setErrors({});
         }, 3000);
-      }, 1500);
-    } else {
-      console.log('Form has errors', errors);
+      } else {
+        // Handle validation errors from server
+        if (result.errors) {
+          setErrors(result.errors);
+        } else {
+          alert(result.message || 'Something went wrong');
+        }
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Failed to submit form. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }
+};
 
   return (
-    <section className="bg-secondary py-20 px-4 min-h-screen flex items-center">
+    <section className="bg-gradient-to-br from-slate-50 to-orange-50 py-20 px-4 min-h-screen flex items-center">
       <div className="max-w-7xl mx-auto w-full">
 
         {/* Header */}
-        <div className="mb-12 text-center md:text-left">
-          <div className="flex items-center gap-2 text-[#F97316] uppercase tracking-widest text-sm font-semibold mb-3 justify-center md:justify-start">
-            <span className="w-8 h-0.5 bg-[#F97316]"></span>
-            Request a Quote
+        <div className="mb-12 text-center">
+          <div className="inline-flex items-center gap-2 bg-orange-100 px-4 py-2 rounded-full mb-4">
+            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+            <span className="text-orange-600 uppercase tracking-wider text-sm font-semibold">
+              Get Your Quote
+            </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#fff] via-[#F97316] to-[#FB923C] bg-clip-text text-transparent">
-            Request Your Estimate
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-slate-800 via-orange-600 to-orange-500 bg-clip-text text-transparent">
+              Request Your Estimate
+            </span>
           </h2>
-          <p className="text-[#fff] mt-4 max-w-2xl mx-auto md:mx-0">
+          <p className="text-slate-600 text-lg max-w-2xl mx-auto">
             Get a personalized shipping quote within 24 hours. Fill out the form below with your cargo details.
           </p>
         </div>
 
         {/* Success Message */}
         {submitSuccess && (
-          <div className="mb-6 p-4 bg-[#22C55E]/10 border border-[#22C55E] rounded-xl text-[#16A34A] flex items-center gap-2">
-            <span className="text-xl">✓</span> Quote request sent successfully! We'll contact you within 24 hours.
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 flex items-center gap-3 animate-slideDown">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">✓</div>
+            <span className="font-medium">Quote request sent successfully! We'll contact you within 24 hours.</span>
           </div>
         )}
 
         {/* Form Card */}
-        <form onSubmit={handleSubmit} className="bg-white border border-[#F97316]/20 rounded-3xl p-8 md:p-12 shadow-xl relative overflow-hidden">
+        <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm border border-orange-200 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
           
           {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#F97316]/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#F97316]/5 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200 rounded-full blur-3xl opacity-20"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-300 rounded-full blur-3xl opacity-20"></div>
           
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 relative z-10">
 
             {/* Shipment Info */}
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold mb-8 text-[#1E293B] flex items-center gap-2">
-                <span className="w-1 h-6 bg-[#F97316] rounded-full"></span>
-                Shipment & Cargo Details
-              </h3>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">📦</span>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800">Shipment & Cargo Details</h3>
+              </div>
 
-              <Input
+              <Select
                 label="Origin"
                 name="origin"
-                placeholder="Fes, Morocco"
                 value={formData.origin}
                 onChange={handleChange}
-                onBlur={() => handleBlur('origin')}
+                options={originOptions}
                 error={errors.origin}
                 icon="🌍"
+                placeholder="Select origin country"
               />
               
-              <Input
+              <Select
                 label="Destination"
                 name="destination"
-                placeholder="Berlin, Germany"
                 value={formData.destination}
                 onChange={handleChange}
-                onBlur={() => handleBlur('destination')}
+                options={destinationOptions}
                 error={errors.destination}
                 icon="📍"
+                placeholder="Select destination country"
               />
               
               <div className="grid grid-cols-2 gap-4">
-                <Input
+                <Select
                   label="Freight Type"
                   name="freightType"
-                  placeholder="Rail Freight"
                   value={formData.freightType}
                   onChange={handleChange}
-                  onBlur={() => handleBlur('freightType')}
+                  options={freightTypeOptions}
                   error={errors.freightType}
                   icon="🚚"
+                  placeholder="Select type"
                 />
                 <Input
                   label="Weight"
                   name="weight"
-                  placeholder="10kg"
+                  placeholder="e.g., 100kg"
                   value={formData.weight}
                   onChange={handleChange}
-                  onBlur={() => handleBlur('weight')}
                   error={errors.weight}
                   icon="⚖️"
                 />
@@ -225,10 +254,12 @@ export default function RequestQuote() {
 
             {/* Contact Info */}
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold mb-8 text-[#1E293B] flex items-center gap-2">
-                <span className="w-1 h-6 bg-[#F97316] rounded-full"></span>
-                Contact Information
-              </h3>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">👤</span>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800">Contact Information</h3>
+              </div>
 
               <Input
                 label="Full Name"
@@ -236,7 +267,6 @@ export default function RequestQuote() {
                 placeholder="John Doe"
                 value={formData.name}
                 onChange={handleChange}
-                onBlur={() => handleBlur('name')}
                 error={errors.name}
                 icon="👤"
               />
@@ -249,7 +279,6 @@ export default function RequestQuote() {
                   placeholder="example@email.com"
                   value={formData.email}
                   onChange={handleChange}
-                  onBlur={() => handleBlur('email')}
                   error={errors.email}
                   icon="📧"
                 />
@@ -257,10 +286,9 @@ export default function RequestQuote() {
                   label="Phone"
                   name="phone"
                   type="tel"
-                  placeholder="+1234567890"
+                  placeholder="+1 234 567 8900"
                   value={formData.phone}
                   onChange={handleChange}
-                  onBlur={() => handleBlur('phone')}
                   error={errors.phone}
                   icon="📞"
                 />
@@ -281,7 +309,6 @@ export default function RequestQuote() {
                 placeholder="Street, City, Zip Code"
                 value={formData.address}
                 onChange={handleChange}
-                onBlur={() => handleBlur('address')}
                 error={errors.address}
                 icon="🏠"
               />
@@ -290,35 +317,35 @@ export default function RequestQuote() {
 
           {/* Special Instructions */}
           <div className="mt-10 relative z-10">
-            <label className="block text-sm text-[#475569] mb-2 flex items-center gap-2">
-              <span>📝</span> Special Instructions (Optional)
+            <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+              <span className="text-lg">📝</span> Special Instructions (Optional)
             </label>
             <textarea
               name="instructions"
               rows={4}
-              placeholder="Any special requirements..."
+              placeholder="Any special requirements or additional information..."
               value={formData.instructions}
               onChange={handleChange}
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20 rounded-xl px-5 py-4 outline-none transition-all duration-300 hover:border-[#F97316]/50 text-[#1E293B] placeholder-[#94A3B8] resize-none"
+              className="w-full bg-white border border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-xl px-5 py-4 outline-none transition-all duration-300 hover:border-orange-300 text-slate-700 placeholder-slate-400 resize-none"
             />
           </div>
 
           {/* Terms */}
           <div className="mt-6 relative z-10">
-            <div className="flex items-center gap-3 text-sm">
+            <label className="flex items-start gap-3 cursor-pointer group">
               <input
                 type="checkbox"
                 name="agreeToTerms"
                 checked={formData.agreeToTerms}
                 onChange={handleChange}
-                className="w-5 h-5 accent-[#F97316] rounded border-[#CBD5E1] bg-white focus:ring-[#F97316]"
+                className="w-5 h-5 mt-0.5 accent-orange-500 rounded border-slate-300 text-orange-500 focus:ring-orange-200 focus:ring-offset-0"
               />
-              <span className="text-[#475569]">
-                I agree to the <span className="text-[#F97316] hover:text-[#FB923C] hover:underline cursor-pointer transition-colors">Terms & Conditions</span> and <span className="text-[#F97316] hover:text-[#FB923C] hover:underline cursor-pointer transition-colors">Privacy Policy</span>.
+              <span className="text-slate-600 text-sm">
+                I agree to the <span className="text-orange-600 font-medium hover:text-orange-700 hover:underline cursor-pointer transition-colors">Terms & Conditions</span> and <span className="text-orange-600 font-medium hover:text-orange-700 hover:underline cursor-pointer transition-colors">Privacy Policy</span>.
               </span>
-            </div>
+            </label>
             {errors.agreeToTerms && (
-              <p className="mt-2 text-sm text-[#EF4444] flex items-center gap-1">
+              <p className="mt-2 text-sm text-red-500 flex items-center gap-1 bg-red-50 px-3 py-2 rounded-lg">
                 <span>⚠️</span> {errors.agreeToTerms}
               </p>
             )}
@@ -329,9 +356,9 @@ export default function RequestQuote() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="relative group bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white font-semibold px-12 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#F97316]/25 hover:shadow-[0_0_30px_rgba(249,115,22,0.4)] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+              className="relative group bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold px-12 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg min-w-[240px]"
             >
-              <span className="flex items-center gap-3">
+              <span className="flex items-center justify-center gap-3">
                 {isSubmitting ? (
                   <>
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -342,8 +369,10 @@ export default function RequestQuote() {
                   </>
                 ) : (
                   <>
-                    Send Your Request
-                    <span className="group-hover:translate-x-2 transition-transform">→</span>
+                    Get Your Quote
+                    <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
                   </>
                 )}
               </span>
@@ -352,16 +381,32 @@ export default function RequestQuote() {
 
         </form>
       </div>
+
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </section>
   );
 }
 
-// Simple Input Component
-function Input({ label, name, type = 'text', placeholder, value, onChange, onBlur, error, icon, hint }) {
+// Input Component
+function Input({ label, name, type = 'text', placeholder, value, onChange, error, icon, hint }) {
   return (
     <div>
-      <label htmlFor={name} className="block text-sm text-[#475569] mb-2 flex items-center gap-2">
-        <span>{icon}</span> {label}
+      <label htmlFor={name} className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+        <span className="text-lg">{icon}</span> {label}
       </label>
       <input
         id={name}
@@ -370,23 +415,67 @@ function Input({ label, name, type = 'text', placeholder, value, onChange, onBlu
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        onBlur={onBlur}
         className={`
-          w-full bg-white border rounded-xl px-4 py-3 outline-none transition-all duration-300 text-[#1E293B] placeholder-[#94A3B8]
+          w-full bg-white border rounded-xl px-4 py-3 outline-none transition-all duration-300 text-slate-700 placeholder-slate-400
           ${error 
-            ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-2 focus:ring-[#EF4444]/20' 
-            : 'border-[#E2E8F0] focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20'
+            ? 'border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100' 
+            : 'border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100'
           }
-          hover:border-[#F97316]/50
+          hover:border-orange-300
         `}
       />
       {error && (
-        <p className="mt-2 text-sm text-[#EF4444] flex items-center gap-1">
+        <p className="mt-2 text-sm text-red-500 flex items-center gap-1 bg-red-50 px-3 py-2 rounded-lg">
           <span>⚠️</span> {error}
         </p>
       )}
       {hint && !error && (
-        <p className="mt-2 text-xs text-[#64748B]">{hint}</p>
+        <p className="mt-2 text-xs text-slate-500 italic">{hint}</p>
+      )}
+    </div>
+  );
+}
+
+// Select Component
+function Select({ label, name, value, onChange, options, error, icon, placeholder }) {
+  return (
+    <div>
+      <label htmlFor={name} className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+        <span className="text-lg">{icon}</span> {label}
+      </label>
+      <div className="relative">
+        <select
+          id={name}
+          name={name}
+          value={value}
+          onChange={onChange}
+          className={`
+            w-full bg-white border rounded-xl px-4 py-3 outline-none appearance-none cursor-pointer transition-all duration-300 text-slate-700
+            ${error 
+              ? 'border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100' 
+              : 'border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100'
+            }
+            hover:border-orange-300
+            ${!value && 'text-slate-400'}
+          `}
+        >
+          <option value="" disabled className="text-slate-400">{placeholder}</option>
+          {options.map((option) => (
+            <option key={option} value={option} className="text-slate-700">
+              {option}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+      {error && (
+        <p className="mt-2 text-sm text-red-500 flex items-center gap-1 bg-red-50 px-3 py-2 rounded-lg">
+          <span>⚠️</span> {error}
+        </p>
       )}
     </div>
   );

@@ -66,7 +66,7 @@ const ServicesSection = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="relative py-20 px-4 md:px-8 lg:px-16 min-h-screen overflow-hidden bg-gradient-to-b from-gray-500 to-black">
+    <section ref={sectionRef} className="relative py-20 px-4 md:px-8 lg:px-16 min-h-screen overflow-hidden bg-white">
       
       {/* Luxury Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -124,13 +124,13 @@ const ServicesSection = () => {
           {/* Decorative Top Line */}
           <div className="flex justify-center items-center gap-4 mb-6">
             <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-[#FD5621] to-transparent"></div>
-            <span className="text-sm tracking-[0.3em] text-gray-400 font-light">OUR SERVICES</span>
+            <span className="text-sm tracking-[0.3em] text-third font-light">OUR SERVICES</span>
             <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-[#FD5621] to-transparent"></div>
           </div>
 
           {/* Main Title */}
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-gray-300 to-third bg-clip-text text-transparent">
               Explore Our
             </span>
             <br />
@@ -174,7 +174,7 @@ const ServicesSection = () => {
                   />
                   
                   {/* Gradient Overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40`}></div>
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30`}></div>
                   
                   {/* Color Accent Overlay */}
                   <div 

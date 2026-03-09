@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { login } from '@/Api/Authentication';
-import { setAuthToken, setUserDetails } from '@/helper/SessionHelper';
-
+import { login } from '@/Api/Authentication'; 
+import { setAuthToken, setUserDetails, getAuthToken } from '@/helper/SessionHelper';  
 const Button = ({
   children,
   type = 'button',
@@ -122,7 +121,34 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+const [isCheckingAuth, setIsCheckingAuth] = useState(true); 
+  useEffect(() => { 
+    const checkAuth = async () => {
+      try {
+        const token = getAuthToken(); 
+        if (token) { 
+          router.push('/');
+        } else {
+          setIsCheckingAuth(false);  
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsCheckingAuth(false); 
+      }
+    };
 
+    checkAuth();
+  }, [router]); 
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#fffaf6] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
   const validateForm = () => {
     const newErrors = {};
 
