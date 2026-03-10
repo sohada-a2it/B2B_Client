@@ -114,11 +114,11 @@ const Navbar = () => {
         { label: 'Industries Details', href: '/industries_deatils' }, 
       ]
     },
-    {
-      label: 'Blog',
-      href: '#',
-      icon: <File className="w-4 h-4" />
-    },
+    // {
+    //   label: 'Blog',
+    //   href: '#',
+    //   icon: <File className="w-4 h-4" />
+    // },
     {
       label: 'Services',
       href: '/service',
@@ -396,7 +396,7 @@ const Navbar = () => {
                   <motion.button
                     whileHover={{ scale: 1.05, y: -2 }} 
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => router.push('/track-order')}
+                    onClick={() => router.push('/tracking-number')}
                     className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 ${
                       scrolled 
                         ? 'bg-white text-third hover:bg-secondary' 

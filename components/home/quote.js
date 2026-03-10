@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function RequestQuote() {
   // Form state
@@ -20,7 +22,6 @@ export default function RequestQuote() {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // Dropdown options
   const originOptions = ['China', 'Thailand'];
@@ -99,305 +100,360 @@ export default function RequestQuote() {
   };
 
   // Handle form submit
-  // Handle form submit
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (validateForm()) {
-    setIsSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
-    try {
-      const response = await fetch('/api/request-quote', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+    if (validateForm()) {
+      setIsSubmitting(true);
+      
+      // Show loading toast
+      const loadingToast = toast.loading('Sending quote request...');
+      
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/request-quote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
 
-      const result = await response.json();
+        // রেসপন্স চেক করুন
+        let result;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(`Server returned ${response.status}: ${text}`);
+        }
 
-      if (result.success) {
-        setSubmitSuccess(true);
-        console.log('Quote ID:', result.quoteId); // optional
-        
-        // Reset form after success
-        setTimeout(() => {
-          setSubmitSuccess(false);
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+
+        if (response.ok && result.success) {
+          // Success toast
+          toast.success(
+            <div>
+              <strong>✓ Quote sent successfully!</strong>
+              <p style={{ fontSize: '14px', marginTop: '5px' }}>
+                Quote ID: {result.quoteId}
+              </p>
+            </div>,
+            {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            }
+          );
+          
+          // ফর্ম রিসেট করুন
           setFormData({
             origin: '', destination: '', freightType: '', weight: '', dimensions: '',
             name: '', email: '', phone: '', company: '', address: '',
             instructions: '', agreeToTerms: false
           });
           setErrors({});
-        }, 3000);
-      } else {
-        // Handle validation errors from server
-        if (result.errors) {
-          setErrors(result.errors);
+          
         } else {
-          alert(result.message || 'Something went wrong');
+          // Error toast
+          toast.error(result?.message || 'Something went wrong', {
+            position: "top-right",
+            autoClose: 5000,
+          });
         }
+      } catch (error) {
+        console.error('Submission error:', error);
+        
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+        
+        // নেটওয়ার্ক বা অন্যান্য এরর
+        if (error.message.includes('Failed to fetch')) {
+          toast.error('⚠️ Cannot connect to server. Please make sure the backend is running on port 8000.', {
+            position: "top-right",
+            autoClose: 5000,
+          });
+        } else {
+          toast.error('Error: ' + error.message, {
+            position: "top-right",
+            autoClose: 5000,
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error('Submission error:', error);
-      alert('Failed to submit form. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      // Form validation errors
+      const errorMessages = Object.values(errors).join('\n');
+      toast.error('Please fix the following errors:\n' + errorMessages, {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
-  }
-};
+  };
 
   return (
-    <section className="bg-gradient-to-br from-slate-50 to-orange-50 py-20 px-4 min-h-screen flex items-center">
-      <div className="max-w-7xl mx-auto w-full">
+    <>
+      {/* Toast Container - এটা যোগ করুন */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      
+      <section className="bg-gradient-to-br from-slate-50 to-orange-50 py-20 px-4 min-h-screen flex items-center">
+        <div className="max-w-7xl mx-auto w-full">
 
-        {/* Header */}
-        <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 px-4 py-2 rounded-full mb-4">
-            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-            <span className="text-orange-600 uppercase tracking-wider text-sm font-semibold">
-              Get Your Quote
-            </span>
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-2 bg-orange-100 px-4 py-2 rounded-full mb-4">
+              <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+              <span className="text-orange-600 uppercase tracking-wider text-sm font-semibold">
+                Get Your Quote
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-slate-800 via-orange-600 to-orange-500 bg-clip-text text-transparent">
+                Request Your Estimate
+              </span>
+            </h2>
+            <p className="text-slate-600 text-lg max-w-2xl mx-auto">
+              Get a personalized shipping quote within 24 hours. Fill out the form below with your cargo details.
+            </p>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-slate-800 via-orange-600 to-orange-500 bg-clip-text text-transparent">
-              Request Your Estimate
-            </span>
-          </h2>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-            Get a personalized shipping quote within 24 hours. Fill out the form below with your cargo details.
-          </p>
+
+          {/* Form Card */}
+          <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm border border-orange-200 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200 rounded-full blur-3xl opacity-20"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-300 rounded-full blur-3xl opacity-20"></div>
+            
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 relative z-10">
+
+              {/* Shipment Info */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <span className="text-xl">📦</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-800">Shipment & Cargo Details</h3>
+                </div>
+
+                <Select
+                  label="Origin"
+                  name="origin"
+                  value={formData.origin}
+                  onChange={handleChange}
+                  options={originOptions}
+                  error={errors.origin}
+                  icon="🌍"
+                  placeholder="Select origin country"
+                />
+                
+                <Select
+                  label="Destination"
+                  name="destination"
+                  value={formData.destination}
+                  onChange={handleChange}
+                  options={destinationOptions}
+                  error={errors.destination}
+                  icon="📍"
+                  placeholder="Select destination country"
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <Select
+                    label="Freight Type"
+                    name="freightType"
+                    value={formData.freightType}
+                    onChange={handleChange}
+                    options={freightTypeOptions}
+                    error={errors.freightType}
+                    icon="🚚"
+                    placeholder="Select type"
+                  />
+                  <Input
+                    label="Weight"
+                    name="weight"
+                    placeholder="e.g., 100kg"
+                    value={formData.weight}
+                    onChange={handleChange}
+                    error={errors.weight}
+                    icon="⚖️"
+                  />
+                </div>
+                
+                <Input
+                  label="Dimensions"
+                  name="dimensions"
+                  placeholder="120cm x 80cm x 60cm"
+                  value={formData.dimensions}
+                  onChange={handleChange}
+                  error={errors.dimensions}
+                  icon="📏"
+                  hint="Optional - Format: L x W x H in cm"
+                />
+              </div>
+
+              {/* Contact Info */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <span className="text-xl">👤</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-800">Contact Information</h3>
+                </div>
+
+                <Input
+                  label="Full Name"
+                  name="name"
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={handleChange}
+                  error={errors.name}
+                  icon="👤"
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Email"
+                    name="email"
+                    type="email"
+                    placeholder="example@email.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    error={errors.email}
+                    icon="📧"
+                  />
+                  <Input
+                    label="Phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+1 234 567 8900"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    error={errors.phone}
+                    icon="📞"
+                  />
+                </div>
+                
+                <Input
+                  label="Company"
+                  name="company"
+                  placeholder="Company Name (Optional)"
+                  value={formData.company}
+                  onChange={handleChange}
+                  icon="🏢"
+                />
+                
+                <Input
+                  label="Address"
+                  name="address"
+                  placeholder="Street, City, Zip Code"
+                  value={formData.address}
+                  onChange={handleChange}
+                  error={errors.address}
+                  icon="🏠"
+                />
+              </div>
+            </div>
+
+            {/* Special Instructions */}
+            <div className="mt-10 relative z-10">
+              <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                <span className="text-lg">📝</span> Special Instructions (Optional)
+              </label>
+              <textarea
+                name="instructions"
+                rows={4}
+                placeholder="Any special requirements or additional information..."
+                value={formData.instructions}
+                onChange={handleChange}
+                className="w-full bg-white border border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-xl px-5 py-4 outline-none transition-all duration-300 hover:border-orange-300 text-slate-700 placeholder-slate-400 resize-none"
+              />
+            </div>
+
+            {/* Terms */}
+            <div className="mt-6 relative z-10">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  name="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onChange={handleChange}
+                  className="w-5 h-5 mt-0.5 accent-orange-500 rounded border-slate-300 text-orange-500 focus:ring-orange-200 focus:ring-offset-0"
+                />
+                <span className="text-slate-600 text-sm">
+                  I agree to the <span className="text-orange-600 font-medium hover:text-orange-700 hover:underline cursor-pointer transition-colors">Terms & Conditions</span> and <span className="text-orange-600 font-medium hover:text-orange-700 hover:underline cursor-pointer transition-colors">Privacy Policy</span>.
+                </span>
+              </label>
+              {errors.agreeToTerms && (
+                <p className="mt-2 text-sm text-red-500 flex items-center gap-1 bg-red-50 px-3 py-2 rounded-lg">
+                  <span>⚠️</span> {errors.agreeToTerms}
+                </p>
+              )}
+            </div>
+
+            {/* Button */}
+            <div className="mt-10 text-center relative z-10">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="relative group bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold px-12 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg min-w-[240px]"
+              >
+                <span className="flex items-center justify-center gap-3">
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending Request...
+                    </>
+                  ) : (
+                    <>
+                      Get Your Quote
+                      <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </>
+                  )}
+                </span>
+              </button>
+            </div>
+
+          </form>
         </div>
 
-        {/* Success Message */}
-        {submitSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 flex items-center gap-3 animate-slideDown">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">✓</div>
-            <span className="font-medium">Quote request sent successfully! We'll contact you within 24 hours.</span>
-          </div>
-        )}
-
-        {/* Form Card */}
-        <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm border border-orange-200 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-          
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200 rounded-full blur-3xl opacity-20"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-300 rounded-full blur-3xl opacity-20"></div>
-          
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 relative z-10">
-
-            {/* Shipment Info */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <span className="text-xl">📦</span>
-                </div>
-                <h3 className="text-xl font-semibold text-slate-800">Shipment & Cargo Details</h3>
-              </div>
-
-              <Select
-                label="Origin"
-                name="origin"
-                value={formData.origin}
-                onChange={handleChange}
-                options={originOptions}
-                error={errors.origin}
-                icon="🌍"
-                placeholder="Select origin country"
-              />
-              
-              <Select
-                label="Destination"
-                name="destination"
-                value={formData.destination}
-                onChange={handleChange}
-                options={destinationOptions}
-                error={errors.destination}
-                icon="📍"
-                placeholder="Select destination country"
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label="Freight Type"
-                  name="freightType"
-                  value={formData.freightType}
-                  onChange={handleChange}
-                  options={freightTypeOptions}
-                  error={errors.freightType}
-                  icon="🚚"
-                  placeholder="Select type"
-                />
-                <Input
-                  label="Weight"
-                  name="weight"
-                  placeholder="e.g., 100kg"
-                  value={formData.weight}
-                  onChange={handleChange}
-                  error={errors.weight}
-                  icon="⚖️"
-                />
-              </div>
-              
-              <Input
-                label="Dimensions"
-                name="dimensions"
-                placeholder="120cm x 80cm x 60cm"
-                value={formData.dimensions}
-                onChange={handleChange}
-                error={errors.dimensions}
-                icon="📏"
-                hint="Optional - Format: L x W x H in cm"
-              />
-            </div>
-
-            {/* Contact Info */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <span className="text-xl">👤</span>
-                </div>
-                <h3 className="text-xl font-semibold text-slate-800">Contact Information</h3>
-              </div>
-
-              <Input
-                label="Full Name"
-                name="name"
-                placeholder="John Doe"
-                value={formData.name}
-                onChange={handleChange}
-                error={errors.name}
-                icon="👤"
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Email"
-                  name="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  error={errors.email}
-                  icon="📧"
-                />
-                <Input
-                  label="Phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="+1 234 567 8900"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  error={errors.phone}
-                  icon="📞"
-                />
-              </div>
-              
-              <Input
-                label="Company"
-                name="company"
-                placeholder="Company Name (Optional)"
-                value={formData.company}
-                onChange={handleChange}
-                icon="🏢"
-              />
-              
-              <Input
-                label="Address"
-                name="address"
-                placeholder="Street, City, Zip Code"
-                value={formData.address}
-                onChange={handleChange}
-                error={errors.address}
-                icon="🏠"
-              />
-            </div>
-          </div>
-
-          {/* Special Instructions */}
-          <div className="mt-10 relative z-10">
-            <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
-              <span className="text-lg">📝</span> Special Instructions (Optional)
-            </label>
-            <textarea
-              name="instructions"
-              rows={4}
-              placeholder="Any special requirements or additional information..."
-              value={formData.instructions}
-              onChange={handleChange}
-              className="w-full bg-white border border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-xl px-5 py-4 outline-none transition-all duration-300 hover:border-orange-300 text-slate-700 placeholder-slate-400 resize-none"
-            />
-          </div>
-
-          {/* Terms */}
-          <div className="mt-6 relative z-10">
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                name="agreeToTerms"
-                checked={formData.agreeToTerms}
-                onChange={handleChange}
-                className="w-5 h-5 mt-0.5 accent-orange-500 rounded border-slate-300 text-orange-500 focus:ring-orange-200 focus:ring-offset-0"
-              />
-              <span className="text-slate-600 text-sm">
-                I agree to the <span className="text-orange-600 font-medium hover:text-orange-700 hover:underline cursor-pointer transition-colors">Terms & Conditions</span> and <span className="text-orange-600 font-medium hover:text-orange-700 hover:underline cursor-pointer transition-colors">Privacy Policy</span>.
-              </span>
-            </label>
-            {errors.agreeToTerms && (
-              <p className="mt-2 text-sm text-red-500 flex items-center gap-1 bg-red-50 px-3 py-2 rounded-lg">
-                <span>⚠️</span> {errors.agreeToTerms}
-              </p>
-            )}
-          </div>
-
-          {/* Button */}
-          <div className="mt-10 text-center relative z-10">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="relative group bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold px-12 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg min-w-[240px]"
-            >
-              <span className="flex items-center justify-center gap-3">
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending Request...
-                  </>
-                ) : (
-                  <>
-                    Get Your Quote
-                    <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </>
-                )}
-              </span>
-            </button>
-          </div>
-
-        </form>
-      </div>
-
-      <style jsx>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
+        <style jsx>{`
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          .animate-slideDown {
+            animation: slideDown 0.3s ease-out;
           }
-        }
-        .animate-slideDown {
-          animation: slideDown 0.3s ease-out;
-        }
-      `}</style>
-    </section>
+        `}</style>
+      </section>
+    </>
   );
 }
 

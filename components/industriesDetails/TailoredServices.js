@@ -27,10 +27,10 @@ export default function TailoredServices() {
       <div className="max-w-7xl mx-auto px-6">
         {/* Heading */}
         <div className="text-center mb-14">
-          <h2 className="text-4xl font-bold text-gray-800">
+          <h2 className="text-4xl font-bold text-primary">
             Tailored Services
           </h2>
-          <p className="text-gray-500 mt-4 max-w-2xl mx-auto">
+          <p className="text-third mt-4 max-w-2xl mx-auto">
             We provide customized logistics solutions designed to meet your
             unique business requirements efficiently and reliably.
           </p>

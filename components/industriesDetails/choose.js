@@ -77,7 +77,7 @@ export default function WhyChooseUs() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-10 items-start">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
           
           {/* Left Tabs */}
           <div className="space-y-4">
@@ -87,7 +87,7 @@ export default function WhyChooseUs() {
                 onClick={() => setActive(index)}
                 className={`w-full text-left p-5 rounded-xl transition duration-300 border ${
                   active === index
-                    ? "bg-blue-600 text-white shadow-lg"
+                    ? "bg-primary text-white shadow-lg"
                     : "bg-gray-50 hover:bg-blue-50 text-gray-700"
                 }`}
               >
@@ -108,7 +108,7 @@ export default function WhyChooseUs() {
             {/* Counter Section */}
             <div className="grid grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-xl shadow text-center">
-                <h4 className="text-3xl font-bold text-blue-600">
+                <h4 className="text-3xl font-bold text-third">
                   <Counter end={600} suffix="+" />
                 </h4>
                 <p className="text-sm text-gray-500 mt-2">
@@ -117,7 +117,7 @@ export default function WhyChooseUs() {
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow text-center">
-                <h4 className="text-3xl font-bold text-blue-600">
+                <h4 className="text-3xl font-bold text-third">
                   <Counter end={30} suffix="%" />
                 </h4>
                 <p className="text-sm text-gray-500 mt-2">
@@ -126,7 +126,7 @@ export default function WhyChooseUs() {
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow text-center">
-                <h4 className="text-3xl font-bold text-blue-600">
+                <h4 className="text-3xl font-bold text-third">
                   <Counter end={15} suffix="+" />
                 </h4>
                 <p className="text-sm text-gray-500 mt-2">
@@ -135,7 +135,7 @@ export default function WhyChooseUs() {
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow text-center">
-                <h4 className="text-3xl font-bold text-blue-600">
+                <h4 className="text-3xl font-bold text-third">
                   <Counter end={120} suffix="+" />
                 </h4>
                 <p className="text-sm text-gray-500 mt-2">

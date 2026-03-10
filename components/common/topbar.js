@@ -55,7 +55,7 @@ const Topbar = () => {
         duration: 0.3,
         ease: "easeInOut"
       }}
-      className="bg-primary text-third font-bold py-2 text-sm fixed top-0 left-0 right-0 z-[10000]"
+      className="bg-primary text-third font-bold py-2 text-sm fixed top-0 left-0 right-0 z-[40]"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between">
@@ -72,8 +72,8 @@ const Topbar = () => {
               whileHover={{ scale: 1.05 }}
               className="hidden lg:flex items-center space-x-1 text-white font-bold hover:text-third"
             >
-              <span>MAP VIEW</span>
-              <ChevronRight className="w-4 h-4" />
+              {/* <span>MAP VIEW</span> */}
+              {/* <ChevronRight className="w-4 h-4" /> */}
             </motion.button>
           </div>
 
@@ -86,7 +86,7 @@ const Topbar = () => {
             >
               {/* <Mail className="w-4 h-4 text-white" /> */}
               <span className="border-b border-transparent group-hover:border-[#FD5621] transition-all duration-300">
-                CONTACT US
+                <a href="mailto:info@company.com">Contact Us</a>
               </span>
               <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
             </motion.button>

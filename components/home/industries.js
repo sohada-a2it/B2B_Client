@@ -136,7 +136,7 @@ const IndustriesSection = () => {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 items-center">
           {/* Left Side - Industries Grid */}
           <div className="lg:w-2/3">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">

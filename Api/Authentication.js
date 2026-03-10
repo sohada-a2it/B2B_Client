@@ -79,6 +79,24 @@ export const resetPassword = async (email, otp, newPassword) => {
     throw error.response?.data || { message: 'Failed to reset password' };
   }
 };
+// ✅ Verify Reset OTP - এই ফাংশনটা যোগ করুন
+export const verifyResetOTP = async (email, otp) => {
+  try {
+    const response = await axiosInstance.post('/verify-reset-otp', { email, otp });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'OTP verification failed' };
+  }
+};
+// ✅ Resend Reset OTP (Optional)
+export const resendResetOTP = async (email) => {
+  try {
+    const response = await axiosInstance.post('/resend-reset-otp', { email });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to resend OTP' };
+  }
+};
 
 // Logout
 export const logout = () => {

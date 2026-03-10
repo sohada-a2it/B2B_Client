@@ -1,4 +1,7 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   HiChevronRight,
   HiPhone,
@@ -10,9 +13,133 @@ import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
 function Contact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    inquiryType: '',
+    message: '',
+    agreeToTerms: false
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!formData.inquiryType) newErrors.inquiryType = 'Please select inquiry type';
+    if (!formData.message.trim()) newErrors.message = 'Message is required';
+    if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to terms';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const loadingToast = toast.loading('Sending message...');
+
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      toast.dismiss(loadingToast);
+
+      if (response.ok && result.success) {
+        toast.success(
+          <div>
+            <strong>✓ Message sent successfully!</strong>
+            <p style={{ fontSize: '14px', marginTop: '5px' }}>
+              Reference: {result.contactId}
+            </p>
+          </div>,
+          { autoClose: 5000 }
+        );
+
+        // Reset form
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          inquiryType: '',
+          message: '',
+          agreeToTerms: false
+        });
+        setErrors({});
+      } else {
+        toast.error(result.message || 'Something went wrong');
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error('Submission error:', error);
+      
+      if (error.message.includes('Failed to fetch')) {
+        toast.error('Cannot connect to server. Please try again.');
+      } else {
+        toast.error('Network error: ' + error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-gray-50">
-      {/* ================= Banner Section ================= */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
+      {/* Banner Section */}
       <div
         className="min-h-[300px] bg-cover bg-center bg-no-repeat relative mx-6 rounded-xl overflow-hidden"
         style={{
@@ -22,7 +149,6 @@ function Contact() {
         <div className="absolute inset-0 bg-black/60"></div>
 
         <div className="relative z-10 p-10 flex flex-col justify-center h-full">
-
           <nav
             className="flex items-center text-sm font-medium text-white"
             aria-label="Breadcrumb"
@@ -45,14 +171,14 @@ function Contact() {
         </div>
       </div>
 
-      {/* ================= Contact Cards ================= */}
+      {/* Contact Cards */}
       <div className="max-w-7xl mx-auto px-6 py-16">
         <p className="text-primary text-center font-bold">Get in touch</p>
         <h1 className="text-4xl md:text-5xl font-bold text-fourth mb-4 text-center">
             Start Your Journey With Us
-          </h1>
+        </h1>
+        
         <div className="grid md:grid-cols-2 gap-8">
-
           {/* Phone & Email */}
           <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition duration-300 border border-gray-100">
             <div className="flex items-start gap-5">
@@ -121,10 +247,9 @@ function Contact() {
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* ================= Social Section ================= */}
+        {/* Social Section */}
         <div className="mt-16 text-center">
           <h3 className="text-lg font-semibold text-gray-700 mb-6">
             Social Connect
@@ -143,107 +268,148 @@ function Contact() {
             )}
           </div>
         </div>
-        {/* ================= Contact Form Section ================= */}
-<div className="mt-20 bg-white rounded-2xl shadow-xl p-8 md:p-14 border border-gray-100">
-  <div className="text-center mb-12">
-    <p className="text-orange-500 font-semibold tracking-wider uppercase text-sm">
-      Send Message
-    </p>
-    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mt-3">
-      Message Us for Assistance
-    </h2>
-  </div>
 
-  <form className="grid md:grid-cols-2 gap-8">
-    
-    {/* Left Side */}
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Your Name
-        </label>
-        <input
-          type="text"
-          placeholder="Enter your full name"
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition"
-        />
-      </div>
+        {/* Contact Form Section */}
+        <div className="mt-20 bg-white rounded-2xl shadow-xl p-8 md:p-14 border border-gray-100">
+          <div className="text-center mb-12">
+            <p className="text-orange-500 font-semibold tracking-wider uppercase text-sm">
+              Send Message
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mt-3">
+              Message Us for Assistance
+            </h2>
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Phone
-        </label>
-        <input
-          type="text"
-          placeholder="+1 Number"
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition"
-        />
-      </div>
+          <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
+            
+            {/* Left Side */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Your Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition ${
+                    errors.name ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                  }`}
+                />
+                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+              </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Email
-        </label>
-        <input
-          type="email"
-          placeholder="Enter your email address"
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition"
-        />
-      </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Phone <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+1 Number"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition ${
+                    errors.phone ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                  }`}
+                />
+                {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+              </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Reason for Contact
-        </label>
-        <select
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition bg-white"
-        >
-          <option>Select Inquiry Type</option>
-          <option>General Inquiry</option>
-          <option>Shipping Information</option>
-          <option>Pricing</option>
-          <option>Support</option>
-        </select>
-      </div>
-    </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email address"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition ${
+                    errors.email ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                  }`}
+                />
+                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              </div>
 
-    {/* Right Side */}
-    <div className="flex flex-col">
-      <label className="block text-sm font-medium text-gray-600 mb-2">
-        Message
-      </label>
-      <textarea
-        rows="10"
-        placeholder="Write your message here..."
-        className="w-full h-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition resize-none"
-      ></textarea>
-    </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Reason for Contact <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="inquiryType"
+                  value={formData.inquiryType}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition bg-white ${
+                    errors.inquiryType ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                  }`}
+                >
+                  <option value="">Select Inquiry Type</option>
+                  <option value="General Inquiry">General Inquiry</option>
+                  <option value="Shipping Information">Shipping Information</option>
+                  <option value="Pricing">Pricing</option>
+                  <option value="Support">Support</option>
+                </select>
+                {errors.inquiryType && <p className="mt-1 text-sm text-red-500">{errors.inquiryType}</p>}
+              </div>
+            </div>
 
-    {/* Terms + Button */}
-    <div className="md:col-span-2 mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <input type="checkbox" className="accent-orange-500" />
-        <span>
-          I agree to the{" "}
-          <a href="#" className="text-orange-500 hover:underline">
-            Terms & Conditions
-          </a>{" "}
-          and{" "}
-          <a href="#" className="text-orange-500 hover:underline">
-            Privacy Policy
-          </a>
-        </span>
-      </div>
+            {/* Right Side */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Message <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                name="message"
+                rows="10"
+                value={formData.message}
+                onChange={handleChange}
+                placeholder="Write your message here..."
+                className={`w-full h-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition resize-none ${
+                  errors.message ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                }`}
+              ></textarea>
+              {errors.message && <p className="mt-1 text-sm text-red-500">{errors.message}</p>}
+            </div>
 
-      <button
-        type="submit"
-        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition duration-300"
-      >
-        Send Your Request
-      </button>
-    </div>
-  </form>
-</div>
+            {/* Terms + Button */}
+            <div className="md:col-span-2 mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <input 
+                  type="checkbox" 
+                  name="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onChange={handleChange}
+                  className="accent-orange-500" 
+                />
+                <span>
+                  I agree to the{" "}
+                  <a href="#" className="text-orange-500 hover:underline">
+                    Terms & Conditions
+                  </a>{" "}
+                  and{" "}
+                  <a href="#" className="text-orange-500 hover:underline">
+                    Privacy Policy
+                  </a>
+                </span>
+              </div>
+              {errors.agreeToTerms && (
+                <p className="text-sm text-red-500">{errors.agreeToTerms}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Your Request'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

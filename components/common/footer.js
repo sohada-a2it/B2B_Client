@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, ChevronRight, Facebook, Twitter, Linkedin, Instagram, Globe } from 'lucide-react';
+import Link from 'next/link';  // শুধু এই লাইনটি যোগ করুন
 
 const footer = () => { 
 
@@ -56,73 +57,61 @@ const footer = () => {
     {
       title: "Links",
       links: [
-        "Our Company",
-        "History",
-        "Leadership Team",
-        "Mission & Vision",
-        "Certifications",
-        "Global Network",
-        "Why Choose Us",
-        "Careers"
+        { name: "Our Company", path: "/about/company" },
+        { name: "History", path: "/about/history" },
+        { name: "Leadership Team", path: "/about/teams" },
+        { name: "Mission & Vision", path: "/footer/mission-vission" },
+        // { name: "Certifications", path: "/certifications" },
+        { name: "Global Network", path: "/contact" },
+        { name: "projects", path: "/about/project" }
       ]
     },
     {
       title: "Essentials",
       links: [
-        "Services",
-        "Transportations",
-        "Industries Served",
-        "Free Estimation",
-        "Booking",
-        "Tracking",
-        "How It's Work",
-        "FAQs"
+        { name: "Services", path: "/service" },
+        // { name: "Transportations", path: "/transportations" },
+        { name: "Industries Served", path: "/industries" },
+        // { name: "Free Estimation", path: "/free-estimation" },
+        { name: "Booking", path: "/footer/booking" },
+        { name: "Tracking", path: "/tracking-number" },
+        // { name: "How It's Work", path: "/how-it-works" },
+        // { name: "FAQs", path: "/faqs" }
+        { name: "Why Choose Us", path: "/footer/choose" },
+        
       ]
     },
     {
       title: "Work Gallery",
       content: (
         <div>
-          {/* <p className="text-gray-600 text-sm mb-4">
-            FIND NEAREST BRANCH
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={{ backgroundColor: gray-600Color }}
-            className="px-6 py-3 rounded-lg text-primary font-semibold text-sm hover:shadow-lg transition-shadow inline-flex items-center gap-2"
-          >
-            FIND NEAREST BRANCH
-            <ChevronRight className="w-4 h-4" />
-          </motion.button> */}
-          
-          {/* Sample Gallery Images - You can replace with actual images */}
           <div className="grid grid-cols-3 gap-2 mt-6">
-  {[
-    { id: 1, src: "/images/gal1.jpg", alt: "Gallery image 1" },
-    { id: 2, src: "/images/gal2.jpg", alt: "Gallery image 2" },
-    { id: 3, src: "/images/gal3.jpg", alt: "Gallery image 3" },
-    { id: 4, src: "/images/gal4.jpg", alt: "Gallery image 4" },
-    { id: 5, src: "/images/gal5.jpg", alt: "Gallery image 5" },
-    { id: 6, src: "/images/gal6.jpg", alt: "Gallery image 6" }
-  ].map((item) => (
-    <motion.div
-      key={item.id}
-      whileHover={{ scale: 1.05 }}
-      className="aspect-square bg-primary/10 rounded-lg overflow-hidden cursor-pointer"
-    >
-      <img 
-        src={item.src} 
-        alt={item.alt}
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = "https://via.placeholder.com/150?text=Gallery";
-        }}
-      />
-    </motion.div>
-  ))}
-</div>
+            {[
+              { id: 1, src: "/images/gal1.jpg", alt: "Gallery image 1", path: "/gallery/1" },
+              { id: 2, src: "/images/gal2.jpg", alt: "Gallery image 2", path: "/gallery/2" },
+              { id: 3, src: "/images/gal3.jpg", alt: "Gallery image 3", path: "/gallery/3" },
+              { id: 4, src: "/images/gal4.jpg", alt: "Gallery image 4", path: "/gallery/4" },
+              { id: 5, src: "/images/gal5.jpg", alt: "Gallery image 5", path: "/gallery/5" },
+              { id: 6, src: "/images/gal6.jpg", alt: "Gallery image 6", path: "/gallery/6" }
+            ].map((item) => (
+              <Link href={item.path} key={item.id}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="aspect-square bg-primary/10 rounded-lg overflow-hidden cursor-pointer"
+                >
+                  <img 
+                    src={item.src} 
+                    alt={item.alt}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/150?text=Gallery";
+                    }}
+                  />
+                </motion.div>
+              </Link>
+            ))}
+          </div>
         </div>
       )
     }
@@ -155,17 +144,17 @@ const footer = () => {
                 <ul className="space-y-3">
                   {section.links.map((link) => (
                     <motion.li
-                      key={link}
+                      key={link.name || link}
                       whileHover={{ x: 5 }}
                       className="text-sm"
                     >
-                      <a
-                        href="#"
+                      <Link
+                        href={link.path || "#"}
                         className="text-gray-600 hover:text-primary transition-colors inline-flex items-center gap-2"
                       >
                         <ChevronRight className="w-3 h-3 text-primary" />
-                        {link}
-                      </a>
+                        {link.name || link}
+                      </Link>
                     </motion.li>
                   ))}
                 </ul>
@@ -177,28 +166,28 @@ const footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        {/* <motion.div
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className=" bg-primary mt-16 pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center gap-4"
+          className="mt-16 pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center gap-4"
         >
           <p className="text-gray-600 text-sm text-center md:text-left">
             © {new Date().getFullYear()} Cargo Logistics Company. All rights reserved.
           </p>
           
           <div className="flex gap-6 text-sm">
-            <a href="#" className="text-gray-600 hover:text-[#FD5621] transition-colors">
+            <Link href="/footer/privacy-policy" className="text-gray-600 hover:text-[#FD5621] transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="text-gray-600 hover:text-[#FD5621] transition-colors">
+            </Link>
+            <Link href="/terms-of-service" className="text-gray-600 hover:text-[#FD5621] transition-colors">
               Terms of Service
-            </a>
-            <a href="#" className="text-gray-600 hover:text-[#FD5621] transition-colors">
+            </Link>
+            <Link href="/cookie-policy" className="text-gray-600 hover:text-[#FD5621] transition-colors">
               Cookie Policy
-            </a>
+            </Link>
           </div>
-        </motion.div> */}
+        </motion.div>
       </div>
     </footer>
   );
