@@ -127,7 +127,7 @@ const [isCheckingAuth, setIsCheckingAuth] = useState(true);
       try {
         const token = getAuthToken(); 
         if (token) { 
-          router.push('/');
+          router.push('/profile');
         } else {
           setIsCheckingAuth(false);  
         }
@@ -227,7 +227,7 @@ const [isCheckingAuth, setIsCheckingAuth] = useState(true);
           
           // Small delay to ensure localStorage is set
           setTimeout(() => {
-            router.push('/');
+            router.push('/profile');
           }, 2000);
         } else {
           toast.error(response.message || 'Invalid email or password', {
