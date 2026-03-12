@@ -11,7 +11,7 @@ import {
   getMyShipments,
   getMyShipmentById,
   getMyShipmentTimeline,
-  getShipmentStatistics,
+  // getShipmentStatistics,
   getShipmentTimeline,
   trackShipmentByNumber,
   
@@ -50,8 +50,16 @@ import {
   CheckCircle as CheckCircleSolid,
   XCircle as XCircleSolid, Clock as ClockSolid,
   TrendingUp, PieChart, BarChart3,
-  Train
+  Train,
+  Layers,
+  Send,
+  Flag,
+  Shield,
+  Award,
+  Pause,
+  RotateCcw
 } from 'lucide-react';
+import { Container } from 'postcss';
 
 // ==================== COLOR CONSTANTS ====================
 const COLORS = {
@@ -66,7 +74,10 @@ const COLORS = {
 };
 
 // ==================== STATUS CONFIGURATION ====================
+// components/shipments/ShipmentsPage.jsx - STATUS_CONFIG আপডেট
+
 const STATUS_CONFIG = {
+  // Initial statuses
   pending: {
     label: 'Pending',
     color: 'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -77,43 +88,97 @@ const STATUS_CONFIG = {
     label: 'Received at Warehouse',
     color: 'bg-orange-50 text-orange-700 border-orange-200',
     icon: Package,
+    progress: 20
+  },
+  picked_up_from_warehouse: {
+    label: 'Picked Up',
+    color: 'bg-blue-50 text-blue-700 border-blue-200',
+    icon: Truck,
+    progress: 15
+  },
+  
+  // Inspection statuses
+  inspected: {
+    label: 'Inspected',
+    color: 'bg-green-50 text-green-700 border-green-200',
+    icon: CheckCircle,
+    progress: 22
+  },
+  
+  // Consolidation statuses
+  consolidating: {                       // ← সঠিক নাম
+    label: 'Consolidating',
+    color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    icon: Layers,
     progress: 25
   },
-  consolidation_in_progress: {
-    label: 'Consolidation',
-    color: 'bg-blue-50 text-blue-700 border-blue-200',
-    icon: Box,
+  consolidated: {                         // ← সঠিক নাম
+    label: 'Consolidated',
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    icon: Layers,
+    progress: 30
+  },
+  ready_for_dispatch: {                   // ← সঠিক নাম
+    label: 'Ready for Dispatch',
+    color: 'bg-purple-50 text-purple-700 border-purple-200',
+    icon: CheckCircle,
     progress: 35
   },
-  ready_for_shipping: {
-    label: 'Ready for Shipping',
-    color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    icon: CheckCircle,
+  loaded_in_container: {                   // ← সঠিক নাম
+    label: 'Loaded in Container',
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    icon: Container,
+    progress: 40
+  },
+  dispatched: {                            // ← সঠিক নাম
+    label: 'Dispatched',
+    color: 'bg-orange-100 text-orange-700 border-orange-200',
+    icon: Send,
     progress: 45
   },
-  in_transit: {
+  
+  // Transit statuses
+  departed_port_of_origin: {               // ← সঠিক নাম
+    label: 'Departed Origin Port',
+    color: 'bg-amber-50 text-amber-700 border-amber-200',
+    icon: Ship,
+    progress: 50
+  },
+  in_transit_sea_freight: {                 // ← সঠিক নাম
+    label: 'In Transit (Sea)',
+    color: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    icon: Ship,
+    progress: 55
+  },
+  in_transit: {                             // ← সঠিক নাম
     label: 'In Transit',
     color: 'bg-cyan-50 text-cyan-700 border-cyan-200',
     icon: Truck,
     progress: 60
   },
-  arrived_at_destination: {
-    label: 'Arrived',
-    color: 'bg-teal-50 text-teal-700 border-teal-200',
-    icon: MapPin,
-    progress: 75
+  
+  // Arrival statuses
+  arrived_at_destination_port: {            // ← সঠিক নাম
+    label: 'Arrived at Destination Port',
+    color: 'bg-green-100 text-green-700 border-green-200',
+    icon: Flag,
+    progress: 70
   },
-  customs_clearance: {
-    label: 'Customs',
-    color: 'bg-purple-50 text-purple-700 border-purple-200',
-    icon: FileText,
-    progress: 85
+  
+  // Customs statuses
+  customs_cleared: {                         // ← সঠিক নাম
+    label: 'Customs Cleared',
+    color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    icon: Shield,
+    progress: 80
   },
+  
+  // Delivery statuses
   out_for_delivery: {
     label: 'Out for Delivery',
     color: 'bg-pink-50 text-pink-700 border-pink-200',
     icon: Navigation,
-    progress: 95
+    progress: 90
   },
   delivered: {
     label: 'Delivered',
@@ -121,20 +186,67 @@ const STATUS_CONFIG = {
     icon: CheckCircleSolid,
     progress: 100
   },
+  completed: {                               // ← সঠিক নাম
+    label: 'Completed',
+    color: 'bg-emerald-600 text-white border-emerald-600',
+    icon: Award,
+    progress: 100
+  },
+  
+  // Problem statuses
+  damage_reported: {                         // ← নতুন
+    label: 'Damage Reported',
+    color: 'bg-red-50 text-red-700 border-red-200',
+    icon: AlertCircle,
+    progress: 0
+  },
+  on_hold: {
+    label: 'On Hold',
+    color: 'bg-gray-100 text-gray-700 border-gray-200',
+    icon: Pause,
+    progress: 0
+  },
   cancelled: {
     label: 'Cancelled',
     color: 'bg-red-50 text-red-700 border-red-200',
     icon: XCircleSolid,
     progress: 0
   },
-  draft: {
-    label: 'Draft',
-    color: 'bg-gray-50 text-gray-700 border-gray-200',
-    icon: FileText,
-    progress: 5
+  returned: {
+    label: 'Returned',
+    color: 'bg-orange-50 text-orange-700 border-orange-200',
+    icon: RotateCcw,
+    progress: 0
   }
 };
-
+// Progress বার জন্য ফাংশন
+const getProgressForStatus = (status) => {
+  // STATUS_CONFIG থেকে progress নিন
+  const config = STATUS_CONFIG[status];
+  if (config) return config.progress;
+  
+  // না পেলে ডিফল্ট প্রোগ্রেস ক্যালকুলেট করুন
+  const progressMap = {
+    'pending': 10,
+    'received_at_warehouse': 20,
+    'inspected': 22,
+    'consolidating': 25,
+    'consolidated': 30,
+    'ready_for_dispatch': 35,
+    'loaded_in_container': 40,
+    'dispatched': 45,
+    'departed_port_of_origin': 50,
+    'in_transit_sea_freight': 55,
+    'in_transit': 60,
+    'arrived_at_destination_port': 70,
+    'customs_cleared': 80,
+    'out_for_delivery': 90,
+    'delivered': 100,
+    'completed': 100
+  };
+  
+  return progressMap[status] || 0;
+};
 // ==================== SHIPMENT MODE CONFIG ====================
 const SHIPMENT_MODE_CONFIG = {
   air_freight: { icon: Plane, label: 'Air Freight', color: COLORS.info },
@@ -241,11 +353,29 @@ const Select = ({ label, value, onChange, options, placeholder, icon: Icon, requ
 );
 
 // ==================== STATUS BADGE ====================
+// StatusBadge component - ফ্যালব্যাক সহ
 const StatusBadge = ({ status, size = 'md' }) => {
-  const config = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-50 text-gray-700', icon: Clock };
-  const Icon = config.icon;
+  // কনফিগারেশন থেকে স্ট্যাটাস খুঁজুন
+  const config = STATUS_CONFIG[status];
+  
+  // যদি না পাওয়া যায়, তাহলে ফরম্যাট করে দেখান
   const sizes = { sm: 'px-2 py-0.5 text-xs', md: 'px-2.5 py-1 text-xs', lg: 'px-3 py-1.5 text-sm' };
+  
+  if (!config) {
+    // ডিফল্ট ব্যাজ
+    const formattedLabel = status?.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ') || 'Unknown';
+    
+    return (
+      <span className={`inline-flex items-center rounded-full font-medium border bg-gray-50 text-gray-700 border-gray-200 ${sizes[size]}`}>
+        <Clock className={`${size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5'} mr-1`} />
+        {formattedLabel}
+      </span>
+    );
+  }
 
+  const Icon = config.icon;
   return (
     <span className={`inline-flex items-center rounded-full font-medium border ${config.color} ${sizes[size]}`}>
       <Icon className={`${size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5'} mr-1`} />
@@ -751,26 +881,7 @@ export default function ShipmentsPage() {
     delivered: 0,
     pending: 0
   });
-
-  // Fetch All Shipments (Protected)
-  const fetchAllShipments = async () => {
-    setLoading(true);
-    try {
-      const response = await getAllShipments(filters);
-      if (response.success) {
-        setShipments(response.data || []);
-        setPagination(response.pagination);
-        const summary = getShipmentSummary(response.data || []);
-        setStats(summary);
-      } else {
-        toast.error(response.message);
-      }
-    } catch (error) {
-      toast.error('Failed to fetch shipments');
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   // Fetch My Shipments (Customer)
   const fetchMyShipments = async () => {
@@ -806,7 +917,7 @@ export default function ShipmentsPage() {
 
   useEffect(() => {
     if (activeView === 'all') {
-      fetchAllShipments();
+      fetchMyShipments();
     } else {
       fetchMyShipments();
     }
@@ -955,7 +1066,7 @@ export default function ShipmentsPage() {
                   Clear
                 </Button>
               )}
-              <Button variant="light" size="md" onClick={activeView === 'all' ? fetchAllShipments : fetchMyShipments} icon={RefreshCw} isLoading={loading} />
+              <Button variant="light" size="md" onClick={activeView === 'all' ? fetchMyShipments : fetchMyShipments} icon={RefreshCw} isLoading={loading} />
             </div>
 
             {/* Advanced Filters */}

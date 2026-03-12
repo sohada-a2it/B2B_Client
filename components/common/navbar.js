@@ -150,7 +150,7 @@ const Navbar = () => {
     },
     { 
       label: 'My Invoices', 
-      href: '/invoices', 
+      href: '/invoice', 
       icon: <FileSpreadsheet className="w-4 h-4" /> 
     }
   ];

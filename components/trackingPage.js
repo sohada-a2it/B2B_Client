@@ -6,10 +6,54 @@ import {
   Search, Package, MapPin, Calendar, Clock, Ship, Truck,
   Weight, Box, Layers, ChevronDown, ChevronUp, FileText,
   Container, User, Building, Phone, Mail, CheckCircle,
-  AlertCircle, XCircle, Download, QrCode
+  AlertCircle, XCircle, Download, QrCode, Shield,
+  Award, Send, Play, Pause, Ban, RotateCcw, Flag
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { trackByNumber } from '@/Api/booking';
+
+// Status configuration for consistent display
+// app/tracking-number/page.js - STATUS_CONFIG-এ সব স্ট্যাটাস যোগ করুন
+
+const STATUS_CONFIG = {
+  // Initial statuses
+  'pending': { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Package, progress: 10 },
+  'picked_up_from_warehouse': { label: 'Picked Up', color: 'bg-blue-100 text-blue-800', icon: Truck, progress: 20 },
+  'received_at_warehouse': { label: 'Received at Warehouse', color: 'bg-purple-100 text-purple-800', icon: Building, progress: 25 },
+  
+  // Consolidation statuses (নতুন)
+  'pending_consolidation': { label: 'Pending Consolidation', color: 'bg-indigo-100 text-indigo-800', icon: Layers, progress: 28 },
+  'consolidating': { label: 'Consolidating', color: 'bg-indigo-200 text-indigo-800', icon: Layers, progress: 29 },
+  'consolidated': { label: 'Consolidated', color: 'bg-indigo-100 text-indigo-800', icon: Layers, progress: 30 },
+  'ready_for_dispatch': { label: 'Ready for Dispatch', color: 'bg-blue-100 text-blue-800', icon: Package, progress: 35 },
+  'loaded_in_container': { label: 'Loaded In Container', color: 'bg-blue-200 text-blue-800', icon: Container, progress: 38 },
+  'dispatched': { label: 'Dispatched', color: 'bg-orange-100 text-orange-800', icon: Truck, progress: 40 },
+  
+  // Departure/transit statuses
+  'departed_port_of_origin': { label: 'Departed Origin Port', color: 'bg-orange-100 text-orange-800', icon: Ship, progress: 40 },
+  'in_transit_sea_freight': { label: 'In Transit', color: 'bg-amber-100 text-amber-800', icon: Ship, progress: 50 },
+  'in_transit_air_freight': { label: 'In Transit', color: 'bg-amber-100 text-amber-800', icon: Truck, progress: 50 },
+  'in_transit': { label: 'In Transit', color: 'bg-amber-100 text-amber-800', icon: Truck, progress: 50 },
+  
+  // Arrival statuses
+  'arrived_at_destination_port': { label: 'Arrived at Destination Port', color: 'bg-green-100 text-green-800', icon: Flag, progress: 60 },
+  'arrived': { label: 'Arrived', color: 'bg-green-100 text-green-800', icon: CheckCircle, progress: 60 },
+  
+  // Customs statuses
+  'customs_cleared': { label: 'Customs Cleared', color: 'bg-emerald-100 text-emerald-800', icon: Shield, progress: 70 },
+  
+  // Delivery statuses
+  'out_for_delivery': { label: 'Out for Delivery', color: 'bg-sky-100 text-sky-800', icon: Truck, progress: 80 },
+  
+  // Final statuses
+  'delivered': { label: 'Delivered', color: 'bg-green-600 text-white', icon: CheckCircle, progress: 100 },
+  'completed': { label: 'Completed', color: 'bg-emerald-600 text-white', icon: Award, progress: 100 },
+  
+  // Problem statuses
+  'on_hold': { label: 'On Hold', color: 'bg-gray-100 text-gray-800', icon: Pause, progress: 0 },
+  'cancelled': { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: Ban, progress: 0 },
+  'returned': { label: 'Returned', color: 'bg-red-100 text-red-800', icon: RotateCcw, progress: 0 }
+};
 
 export default function TrackingPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -52,51 +96,50 @@ export default function TrackingPage() {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'pending': 'bg-yellow-100 text-yellow-800',
-      'picked_up_from_warehouse': 'bg-blue-100 text-blue-800',
-      'received_at_warehouse': 'bg-purple-100 text-purple-800',
-      'consolidated': 'bg-indigo-100 text-indigo-800',
-      'departed_port_of_origin': 'bg-orange-100 text-orange-800',
-      'in_transit_sea_freight': 'bg-amber-100 text-amber-800',
-      'arrived_at_destination_port': 'bg-green-100 text-green-800',
-      'customs_cleared': 'bg-emerald-100 text-emerald-800',
-      'out_for_delivery': 'bg-sky-100 text-sky-800',
-      'delivered': 'bg-green-600 text-white',
-      'on_hold': 'bg-gray-100 text-gray-800',
-      'cancelled': 'bg-red-100 text-red-800'
+  const getStatusConfig = (status) => {
+    return STATUS_CONFIG[status] || {
+      label: status?.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ') || 'Unknown',
+      color: 'bg-gray-100 text-gray-800',
+      icon: Package,
+      progress: 0
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
   };
-const formatAddress = (address) => {
-  if (!address) return 'N/A';
-  
-  // যদি স্ট্রিং হয়
-  if (typeof address === 'string') return address;
-  
-  // যদি অবজেক্ট হয়
-  const parts = [];
-  if (address.addressLine1) parts.push(address.addressLine1);
-  if (address.addressLine2) parts.push(address.addressLine2);
-  if (address.city) parts.push(address.city);
-  if (address.state) parts.push(address.state);
-  if (address.country) parts.push(address.country);
-  if (address.postalCode) parts.push(address.postalCode);
-  
-  return parts.length > 0 ? parts.join(', ') : JSON.stringify(address);
-};
+
+  const formatAddress = (address) => {
+    if (!address) return 'N/A';
+    
+    if (typeof address === 'string') return address;
+    
+    const parts = [];
+    if (address.addressLine1) parts.push(address.addressLine1);
+    if (address.addressLine2) parts.push(address.addressLine2);
+    if (address.city) parts.push(address.city);
+    if (address.state) parts.push(address.state);
+    if (address.country) parts.push(address.country);
+    if (address.postalCode) parts.push(address.postalCode);
+    
+    return parts.length > 0 ? parts.join(', ') : JSON.stringify(address);
+  };
+
   const formatStatus = (status) => {
-    if (!status) return 'Unknown';
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    return getStatusConfig(status).label;
+  };
+
+  const getStatusColor = (status) => {
+    return getStatusConfig(status).color;
+  };
+
+  const getStatusIcon = (status) => {
+    return getStatusConfig(status).icon;
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleString('en-US', {
+      const date = new Date(dateString);
+      return date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -120,6 +163,20 @@ const formatAddress = (address) => {
     }
   };
 
+  // Calculate progress based on status
+  const calculateProgress = () => {
+    if (!trackingData?.status) return 0;
+    
+    // If delivered or completed, always show 100%
+    if (trackingData.status === 'delivered' || trackingData.status === 'completed') {
+      return 100;
+    }
+    
+    // Get progress from config
+    const config = getStatusConfig(trackingData.status);
+    return config.progress || 0;
+  };
+
   // Safe data access helpers
   const getRouteOrigin = () => {
     return trackingData?.route?.origin || 
@@ -136,6 +193,12 @@ const formatAddress = (address) => {
   };
 
   const getCurrentLocation = () => {
+    // Try to get from timeline first
+    if (trackingData?.timeline && trackingData.timeline.length > 0) {
+      const latestEvent = trackingData.timeline[0];
+      if (latestEvent.location) return latestEvent.location;
+    }
+    
     return trackingData?.route?.currentLocation || 
            trackingData?.currentLocation || 
            'In Transit';
@@ -152,6 +215,29 @@ const formatAddress = (address) => {
            trackingData?.estimatedArrival || 
            trackingData?.eta || 
            null;
+  };
+
+  const getLastUpdate = () => {
+    if (trackingData?.timeline && trackingData.timeline.length > 0) {
+      return trackingData.timeline[0].formattedDate || formatDate(trackingData.timeline[0].date);
+    }
+    return trackingData?.route?.lastUpdate || 'N/A';
+  };
+
+  // Get all timeline events sorted by date
+  const getSortedTimeline = () => {
+    if (!trackingData?.timeline) return [];
+    
+    return [...trackingData.timeline].sort((a, b) => {
+      const dateA = new Date(a.date || a.timestamp || 0);
+      const dateB = new Date(b.date || b.timestamp || 0);
+      return dateB - dateA; // Most recent first
+    });
+  };
+
+  const StatusIcon = ({ status }) => {
+    const IconComponent = getStatusIcon(status);
+    return <IconComponent className="h-4 w-4" />;
   };
 
   return (
@@ -214,8 +300,9 @@ const formatAddress = (address) => {
                     Booking: {trackingData.bookingNumber || 'N/A'} | Shipment: {trackingData.shipmentNumber || 'N/A'}
                   </p>
                 </div>
-                <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(trackingData.status)}`}>
-                  {formatStatus(trackingData.status)}
+                <span className={`px-4 py-2 rounded-full text-sm font-medium flex items-center ${getStatusColor(trackingData.status)}`}>
+                  <StatusIcon status={trackingData.status} />
+                  <span className="ml-1">{formatStatus(trackingData.status)}</span>
                 </span>
               </div>
 
@@ -229,7 +316,7 @@ const formatAddress = (address) => {
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                    style={{ width: `${trackingData.progress || 0}%` }}
+                    style={{ width: `${calculateProgress()}%` }}
                   />
                 </div>
               </div>
@@ -248,7 +335,7 @@ const formatAddress = (address) => {
                 <div className="text-center border-l border-r border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">CURRENT</p>
                   <p className="font-medium text-lg">{getCurrentLocation()}</p>
-                  <p className="text-xs text-gray-400">{trackingData.route?.lastUpdate || 'N/A'}</p>
+                  <p className="text-xs text-gray-400">{getLastUpdate()}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">TO</p>
@@ -272,10 +359,10 @@ const formatAddress = (address) => {
 
             {/* ===== TABS ===== */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <div className="flex border-b">
+              <div className="flex border-b overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium ${
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
                     activeTab === 'overview' 
                       ? 'text-orange-600 border-b-2 border-orange-600' 
                       : 'text-gray-500 hover:text-gray-700'
@@ -285,7 +372,7 @@ const formatAddress = (address) => {
                 </button>
                 <button
                   onClick={() => setActiveTab('packages')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium ${
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
                     activeTab === 'packages' 
                       ? 'text-orange-600 border-b-2 border-orange-600' 
                       : 'text-gray-500 hover:text-gray-700'
@@ -295,7 +382,7 @@ const formatAddress = (address) => {
                 </button>
                 <button
                   onClick={() => setActiveTab('timeline')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium ${
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
                     activeTab === 'timeline' 
                       ? 'text-orange-600 border-b-2 border-orange-600' 
                       : 'text-gray-500 hover:text-gray-700'
@@ -305,7 +392,7 @@ const formatAddress = (address) => {
                 </button>
                 <button
                   onClick={() => setActiveTab('details')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium ${
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
                     activeTab === 'details' 
                       ? 'text-orange-600 border-b-2 border-orange-600' 
                       : 'text-gray-500 hover:text-gray-700'
@@ -471,38 +558,41 @@ const formatAddress = (address) => {
               {activeTab === 'timeline' && (
                 <div className="p-6">
                   <h3 className="font-medium mb-4">Tracking Timeline</h3>
-                  {trackingData.timeline && trackingData.timeline.length > 0 ? (
+                  {getSortedTimeline().length > 0 ? (
                     <div className="space-y-4">
-                      {trackingData.timeline.map((event, index) => (
-                        <div key={index} className="flex items-start gap-4">
-                          <div className="relative">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              index === 0 ? 'bg-orange-100' : 'bg-gray-100'
-                            }`}>
-                              {index === 0 ? (
-                                <Package className="h-4 w-4 text-orange-600" />
-                              ) : (
-                                <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                      {getSortedTimeline().map((event, index) => {
+                        const StatusIcon = getStatusIcon(event.status);
+                        return (
+                          <div key={index} className="flex items-start gap-4">
+                            <div className="relative">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                index === 0 ? 'bg-orange-100' : 'bg-gray-100'
+                              }`}>
+                                <StatusIcon className={`h-4 w-4 ${
+                                  index === 0 ? 'text-orange-600' : 'text-gray-600'
+                                }`} />
+                              </div>
+                              {index < getSortedTimeline().length - 1 && (
+                                <div className="absolute top-8 left-4 w-0.5 h-12 bg-gray-200" />
                               )}
                             </div>
-                            {index < trackingData.timeline.length - 1 && (
-                              <div className="absolute top-8 left-4 w-0.5 h-12 bg-gray-200" />
-                            )}
-                          </div>
-                          <div className="flex-1 pb-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium">{formatStatus(event.status)}</p>
-                                <p className="text-sm text-gray-500">{event.location || 'Unknown'}</p>
-                                {event.description && (
-                                  <p className="text-xs text-gray-400 mt-1">{event.description}</p>
-                                )}
+                            <div className="flex-1 pb-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium">{formatStatus(event.status)}</p>
+                                  <p className="text-sm text-gray-500">{event.location || 'Unknown'}</p>
+                                  {event.description && (
+                                    <p className="text-xs text-gray-400 mt-1">{event.description}</p>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-400">
+                                  {event.formattedDate || formatDate(event.date || event.timestamp)}
+                                </p>
                               </div>
-                              <p className="text-xs text-gray-400">{event.formattedDate || formatDate(event.date)}</p>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-gray-400 text-center py-4">No timeline information available</p>
@@ -511,63 +601,94 @@ const formatAddress = (address) => {
               )}
 
               {/* Details Tab */}
-             {activeTab === 'details' && (
-  <div className="p-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Sender Info */}
-      {trackingData.sender && (
-        <div>
-          <h3 className="font-medium mb-3 flex items-center">
-            <User className="h-4 w-4 text-orange-500 mr-2" />
-            Sender Information
-          </h3>
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-            <p className="font-medium">{trackingData.sender.name || 'N/A'}</p>
-            {trackingData.sender.companyName && (
-              <p className="text-sm text-gray-600">{trackingData.sender.companyName}</p>
-            )}
-            <p className="text-sm text-gray-500 flex items-center">
-              <Mail className="h-3 w-3 mr-1" /> {trackingData.sender.email || 'N/A'}
-            </p>
-            <p className="text-sm text-gray-500 flex items-center">
-              <Phone className="h-3 w-3 mr-1" /> {trackingData.sender.phone || 'N/A'}
-            </p>
-            {/* FIX: Use formatAddress here */}
-            <p className="text-sm text-gray-500">
-              <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.sender.address)}
-            </p>
-          </div>
-        </div>
-      )}
+              {activeTab === 'details' && (
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Sender Info */}
+                    {trackingData.sender && (
+                      <div>
+                        <h3 className="font-medium mb-3 flex items-center">
+                          <User className="h-4 w-4 text-orange-500 mr-2" />
+                          Sender Information
+                        </h3>
+                        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                          <p className="font-medium">{trackingData.sender.name || 'N/A'}</p>
+                          {trackingData.sender.companyName && (
+                            <p className="text-sm text-gray-600">{trackingData.sender.companyName}</p>
+                          )}
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <Mail className="h-3 w-3 mr-1" /> {trackingData.sender.email || 'N/A'}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <Phone className="h-3 w-3 mr-1" /> {trackingData.sender.phone || 'N/A'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.sender.address)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-      {/* Receiver Info */}
-      {trackingData.receiver && (
-        <div>
-          <h3 className="font-medium mb-3 flex items-center">
-            <User className="h-4 w-4 text-orange-500 mr-2" />
-            Receiver Information
-          </h3>
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-            <p className="font-medium">{trackingData.receiver.name || 'N/A'}</p>
-            {trackingData.receiver.companyName && (
-              <p className="text-sm text-gray-600">{trackingData.receiver.companyName}</p>
-            )}
-            <p className="text-sm text-gray-500 flex items-center">
-              <Mail className="h-3 w-3 mr-1" /> {trackingData.receiver.email || 'N/A'}
-            </p>
-            <p className="text-sm text-gray-500 flex items-center">
-              <Phone className="h-3 w-3 mr-1" /> {trackingData.receiver.phone || 'N/A'}
-            </p>
-            {/* FIX: Use formatAddress here */}
-            <p className="text-sm text-gray-500">
-              <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.receiver.address)}
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-)}
+                    {/* Receiver Info */}
+                    {trackingData.receiver && (
+                      <div>
+                        <h3 className="font-medium mb-3 flex items-center">
+                          <User className="h-4 w-4 text-orange-500 mr-2" />
+                          Receiver Information
+                        </h3>
+                        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                          <p className="font-medium">{trackingData.receiver.name || 'N/A'}</p>
+                          {trackingData.receiver.companyName && (
+                            <p className="text-sm text-gray-600">{trackingData.receiver.companyName}</p>
+                          )}
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <Mail className="h-3 w-3 mr-1" /> {trackingData.receiver.email || 'N/A'}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <Phone className="h-3 w-3 mr-1" /> {trackingData.receiver.phone || 'N/A'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            <MapPin className="h-3 w-3 inline mr-1" /> {formatAddress(trackingData.receiver.address)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Additional Details */}
+                  {(trackingData.shipmentDetails?.notes || trackingData.notes) && (
+                    <div className="mt-6">
+                      <h3 className="font-medium mb-3">Notes</h3>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                          {trackingData.shipmentDetails?.notes || trackingData.notes}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Print
+              </button>
+              <button
+                onClick={() => {
+                  // Generate QR code or share link
+                  toast.info('Share feature coming soon');
+                }}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm flex items-center"
+              >
+                <QrCode className="h-4 w-4 mr-2" />
+                Share
+              </button>
             </div>
           </div>
         )}

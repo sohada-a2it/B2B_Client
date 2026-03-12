@@ -697,36 +697,36 @@ export const processWarehouse = async (shipmentId, processData) => {
 };
 
 // 25. GET SHIPMENT STATISTICS
-export const getShipmentStatistics = async (dateRange = {}) => {
-  try {
-    const safeDateRange = dateRange || {};
+// export const getShipmentStatistics = async (dateRange = {}) => {
+//   try {
+//     const safeDateRange = dateRange || {};
     
-    const queryParams = new URLSearchParams({
-      ...(safeDateRange.startDate && { startDate: safeDateRange.startDate }),
-      ...(safeDateRange.endDate && { endDate: safeDateRange.endDate })
-    });
+//     const queryParams = new URLSearchParams({
+//       ...(safeDateRange.startDate && { startDate: safeDateRange.startDate }),
+//       ...(safeDateRange.endDate && { endDate: safeDateRange.endDate })
+//     });
 
-    const response = await axiosInstance.get(`/shipments/stats/dashboard?${queryParams}`);
+//     const response = await axiosInstance.get(`/shipments/stats/dashboard?${queryParams}`);
     
-    if (response.data.success) {
-      return {
-        success: true,
-        data: response.data.data,
-        message: response.data.message
-      };
-    }
+//     if (response.data.success) {
+//       return {
+//         success: true,
+//         data: response.data.data,
+//         message: response.data.message
+//       };
+//     }
     
-    throw new Error(response.data.message || 'Failed to fetch statistics');
+//     throw new Error(response.data.message || 'Failed to fetch statistics');
     
-  } catch (error) {
-    console.error('Get shipment statistics error:', error);
-    return {
-      success: false,
-      message: error.response?.data?.error || error.message || 'Failed to fetch statistics',
-      error: error.response?.data
-    };
-  }
-};
+//   } catch (error) {
+//     console.error('Get shipment statistics error:', error);
+//     return {
+//       success: false,
+//       message: error.response?.data?.error || error.message || 'Failed to fetch statistics',
+//       error: error.response?.data
+//     };
+//   }
+// };
 
 // 26. TRACK BY NUMBER (Public)
 export const trackShipmentByNumber = async (trackingNumber) => {
