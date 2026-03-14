@@ -26,7 +26,8 @@ import {
   XCircle,
   AlertCircle,
   Settings,
-  LogOut
+  LogOut,
+  ClipboardList
 } from 'lucide-react';
 import { getCurrentUser, updateProfile, logout } from '@/Api/Authentication';
 import { useRouter } from 'next/navigation';
@@ -190,6 +191,7 @@ const ProfilePage = () => {
 
   const sections = [
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'booking', label: 'My Bookings', icon: ClipboardList },
     { id: 'professional', label: user.role === 'customer' ? 'Business' : 'Professional', icon: user.role === 'customer' ? Building2 : Briefcase },
     { id: 'preferences', label: 'Preferences', icon: Settings },
     { id: 'security', label: 'Security', icon: Shield }
@@ -683,44 +685,7 @@ const ProfilePage = () => {
                             <p className="text-xs text-gray-500 mb-1">Language</p>
                             <p className="font-medium">{(user.language || 'en').toUpperCase()}</p>
                           </div>
-                        </div>
-
-                        {/* Notification Preferences */}
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">Notifications</h4>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <span className="text-sm text-gray-600">Email Notifications</span>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                user.notificationPreferences?.emailNotifications 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {user.notificationPreferences?.emailNotifications ? 'Enabled' : 'Disabled'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <span className="text-sm text-gray-600">Shipment Updates</span>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                user.notificationPreferences?.shipmentUpdates 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {user.notificationPreferences?.shipmentUpdates ? 'Enabled' : 'Disabled'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <span className="text-sm text-gray-600">Invoice Notifications</span>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                user.notificationPreferences?.invoiceNotifications 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {user.notificationPreferences?.invoiceNotifications ? 'Enabled' : 'Disabled'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                        </div> 
                       </div>
                     </div>
                   )}

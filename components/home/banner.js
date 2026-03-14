@@ -75,7 +75,7 @@ const Banner = () => {
   };
 
   return (
-    <div className=" relative overflow-hidden min-h-[600px] md:min-h-[700px] lg:min-h-[500px]">
+    <div className="bg-white relative overflow-hidden min-h-[600px] md:min-h-[700px] lg:min-h-[500px]">
       {/* Animated Background Elements */}
       {/* <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-primary/10 to-blue-300/10 rounded-full blur-3xl" />
@@ -160,13 +160,13 @@ const Banner = () => {
               </div>
 
               {/* Mobile CTA */}
-              <button
+              {/* <button
                 style={{ backgroundColor: primaryColor }}
                 className="w-full py-4 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 hover:shadow-xl transition-all duration-300 active:scale-95"
               >
                 <span>{activeContent.ctaText}</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </button> */}
             </div>
           </div>
         ) : (
@@ -233,17 +233,19 @@ const Banner = () => {
 
               {/* Dynamic CTA Button */}
               <div className="flex gap-4 pt-2">
-                <button
+                {/* <button
                   style={{ backgroundColor: primaryColor }}
                   className="group px-8 py-4 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 relative overflow-hidden"
                 >
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                   <span className="relative">{activeContent.ctaText}</span>
                   <ArrowRight className="w-4 h-4 relative group-hover:translate-x-2 transition-transform duration-300" />
+                </button> */}
+                <a href="/service"> 
+                <button className="px-6 py-4 bg-white text-gray-800 rounded-xl font-semibold border border-gray-300 hover:border-primary/50 hover:shadow-xl transition-all duration-300 hover:bg-fourth hover:text-white">
+                 View All Services
                 </button>
-                <button className="px-6 py-4 bg-white text-gray-800 rounded-xl font-semibold border border-gray-300 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
-                  View All Services
-                </button>
+                </a>
               </div>
             </div>
 

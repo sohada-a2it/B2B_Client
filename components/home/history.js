@@ -3,7 +3,7 @@ import React from 'react'
 
 function history() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 md:py-20 px-4 sm:px-6 lg:px-8">
+    <div className=" bg-gradient-to-br from-gray-50 to-blue-50 py-4 md:py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
           {/* Left Column - history Content */}
@@ -63,7 +63,7 @@ function history() {
                 </div>
               </div>
               
-              <a 
+              {/* <a 
                 href="#" 
                 className="inline-flex items-center justify-center mt-10 px-8 py-3 text-base font-semibold text-white bg-third rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-md hover:shadow-lg"
               >
@@ -71,7 +71,7 @@ function history() {
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
-              </a>
+              </a> */}
             </section>
           </div>
           
@@ -79,7 +79,7 @@ function history() {
 <div className="lg:w-1/3">
   <div className="sticky top-8 relative overflow-hidden">  
     {/* Background/History Image */}
-    <img src="/images/history.jpg" alt="History background" className="w-full h-auto" />
+    <img src="/images/history.jpg" alt="History background" className="w-full h-[400px] rounded-lg" />
     
     {/* Sea/Water effect for realism */}
     <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-blue-900/20 to-transparent"></div>

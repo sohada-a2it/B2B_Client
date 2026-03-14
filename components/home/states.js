@@ -136,7 +136,7 @@ export default function States() {
                     {feature.description}
                   </p>
 
-                  <button className={`flex items-center text-sm font-semibold ${
+                  {/* <button className={`flex items-center text-sm font-semibold ${
                     index === 0 ? 'text-orange-500 hover:text-orange-600' :
                     index === 1 ? 'text-blue-900 hover:text-blue-800' :
                     'text-orange-500 hover:text-orange-600'
@@ -150,7 +150,7 @@ export default function States() {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className={`absolute inset-0 rounded-2xl border-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${

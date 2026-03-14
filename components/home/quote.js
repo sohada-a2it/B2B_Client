@@ -212,7 +212,7 @@ export default function RequestQuote() {
         theme="light"
       />
       
-      <section className="bg-gradient-to-br from-slate-50 to-orange-50 py-20 px-4 min-h-screen flex items-center">
+      <section className="bg-gradient-to-br from-slate-50 to-orange-50 py-6 px-4 min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto w-full">
 
           {/* Header */}

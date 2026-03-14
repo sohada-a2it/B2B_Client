@@ -28,7 +28,7 @@ function page() {
       <Shipping/>
       <Facts/>
       <Industries/>
-      <Blog/>
+      {/* <Blog/> */}
       <Quote/>
       <Warehouse/>
       <Partners/>

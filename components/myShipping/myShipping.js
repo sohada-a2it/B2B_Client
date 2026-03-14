@@ -6,13 +6,10 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import {
   // Main APIs
-  getAllShipments,
-  getShipmentById,
   getMyShipments,
   getMyShipmentById,
   getMyShipmentTimeline,
-  // getShipmentStatistics,
-  getShipmentTimeline,
+  getMyShipmentsSummary,
   trackShipmentByNumber,
   
   // Helper functions
@@ -20,19 +17,15 @@ import {
   getShipmentStatusDisplayText,
   getShipmentModeDisplay,
   getShipmentProgress,
-  isShipmentActive,
   formatShipmentDate,
   formatShipmentCurrency,
   formatWeight,
   formatVolume,
   calculateTotalWeight,
   calculateTotalVolume,
-  isOnTrack,
   getDaysInTransit,
   getShipmentSummary,
   groupShipmentsByStatus,
-  groupShipmentsByMode,
-  getTopRoutes,
   exportShipmentsToCSV
 } from '@/Api/shipping';
 
@@ -59,7 +52,6 @@ import {
   Pause,
   RotateCcw
 } from 'lucide-react';
-import { Container } from 'postcss';
 
 // ==================== COLOR CONSTANTS ====================
 const COLORS = {
@@ -74,8 +66,6 @@ const COLORS = {
 };
 
 // ==================== STATUS CONFIGURATION ====================
-// components/shipments/ShipmentsPage.jsx - STATUS_CONFIG আপডেট
-
 const STATUS_CONFIG = {
   // Initial statuses
   pending: {
@@ -106,31 +96,31 @@ const STATUS_CONFIG = {
   },
   
   // Consolidation statuses
-  consolidating: {                       // ← সঠিক নাম
+  consolidating: {
     label: 'Consolidating',
     color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     icon: Layers,
     progress: 25
   },
-  consolidated: {                         // ← সঠিক নাম
+  consolidated: {
     label: 'Consolidated',
     color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
     icon: Layers,
     progress: 30
   },
-  ready_for_dispatch: {                   // ← সঠিক নাম
+  ready_for_dispatch: {
     label: 'Ready for Dispatch',
     color: 'bg-purple-50 text-purple-700 border-purple-200',
     icon: CheckCircle,
     progress: 35
   },
-  loaded_in_container: {                   // ← সঠিক নাম
+  loaded_in_container: {
     label: 'Loaded in Container',
     color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-    icon: Container,
+    icon: Package,
     progress: 40
   },
-  dispatched: {                            // ← সঠিক নাম
+  dispatched: {
     label: 'Dispatched',
     color: 'bg-orange-100 text-orange-700 border-orange-200',
     icon: Send,
@@ -138,19 +128,19 @@ const STATUS_CONFIG = {
   },
   
   // Transit statuses
-  departed_port_of_origin: {               // ← সঠিক নাম
+  departed_port_of_origin: {
     label: 'Departed Origin Port',
     color: 'bg-amber-50 text-amber-700 border-amber-200',
     icon: Ship,
     progress: 50
   },
-  in_transit_sea_freight: {                 // ← সঠিক নাম
+  in_transit_sea_freight: {
     label: 'In Transit (Sea)',
     color: 'bg-cyan-50 text-cyan-700 border-cyan-200',
     icon: Ship,
     progress: 55
   },
-  in_transit: {                             // ← সঠিক নাম
+  in_transit: {
     label: 'In Transit',
     color: 'bg-cyan-50 text-cyan-700 border-cyan-200',
     icon: Truck,
@@ -158,7 +148,7 @@ const STATUS_CONFIG = {
   },
   
   // Arrival statuses
-  arrived_at_destination_port: {            // ← সঠিক নাম
+  arrived_at_destination_port: {
     label: 'Arrived at Destination Port',
     color: 'bg-green-100 text-green-700 border-green-200',
     icon: Flag,
@@ -166,7 +156,7 @@ const STATUS_CONFIG = {
   },
   
   // Customs statuses
-  customs_cleared: {                         // ← সঠিক নাম
+  customs_cleared: {
     label: 'Customs Cleared',
     color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     icon: Shield,
@@ -186,7 +176,7 @@ const STATUS_CONFIG = {
     icon: CheckCircleSolid,
     progress: 100
   },
-  completed: {                               // ← সঠিক নাম
+  completed: {
     label: 'Completed',
     color: 'bg-emerald-600 text-white border-emerald-600',
     icon: Award,
@@ -194,7 +184,7 @@ const STATUS_CONFIG = {
   },
   
   // Problem statuses
-  damage_reported: {                         // ← নতুন
+  damage_reported: {
     label: 'Damage Reported',
     color: 'bg-red-50 text-red-700 border-red-200',
     icon: AlertCircle,
@@ -219,13 +209,12 @@ const STATUS_CONFIG = {
     progress: 0
   }
 };
+
 // Progress বার জন্য ফাংশন
 const getProgressForStatus = (status) => {
-  // STATUS_CONFIG থেকে progress নিন
   const config = STATUS_CONFIG[status];
   if (config) return config.progress;
   
-  // না পেলে ডিফল্ট প্রোগ্রেস ক্যালকুলেট করুন
   const progressMap = {
     'pending': 10,
     'received_at_warehouse': 20,
@@ -247,6 +236,7 @@ const getProgressForStatus = (status) => {
   
   return progressMap[status] || 0;
 };
+
 // ==================== SHIPMENT MODE CONFIG ====================
 const SHIPMENT_MODE_CONFIG = {
   air_freight: { icon: Plane, label: 'Air Freight', color: COLORS.info },
@@ -353,16 +343,12 @@ const Select = ({ label, value, onChange, options, placeholder, icon: Icon, requ
 );
 
 // ==================== STATUS BADGE ====================
-// StatusBadge component - ফ্যালব্যাক সহ
 const StatusBadge = ({ status, size = 'md' }) => {
-  // কনফিগারেশন থেকে স্ট্যাটাস খুঁজুন
   const config = STATUS_CONFIG[status];
   
-  // যদি না পাওয়া যায়, তাহলে ফরম্যাট করে দেখান
   const sizes = { sm: 'px-2 py-0.5 text-xs', md: 'px-2.5 py-1 text-xs', lg: 'px-3 py-1.5 text-sm' };
   
   if (!config) {
-    // ডিফল্ট ব্যাজ
     const formattedLabel = status?.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ') || 'Unknown';
@@ -501,7 +487,7 @@ const ShipmentDetailsModal = ({ isOpen, onClose, shipment }) => {
   const fetchTimeline = async () => {
     setLoading(true);
     try {
-      const result = await getShipmentTimeline(shipment._id);
+      const result = await getMyShipmentTimeline(shipment._id);
       if (result.success) setTimeline(result.data || []);
     } catch (error) {
       toast.error('Failed to fetch timeline');
@@ -562,29 +548,8 @@ const ShipmentDetailsModal = ({ isOpen, onClose, shipment }) => {
               <div className="border rounded-lg p-4">
                 <h5 className="text-sm font-medium mb-3 flex items-center">
                   <User className="h-4 w-4 mr-2" style={{ color: COLORS.primary }} />
-                  Customer Information
+                  Shipment Information
                 </h5>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500">Name</p>
-                    <p className="text-sm font-medium">
-                      {shipment.customerId?.companyName || 
-                       `${shipment.customerId?.firstName || ''} ${shipment.customerId?.lastName || ''}`.trim() || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Email</p>
-                    <p className="text-sm font-medium">{shipment.customerId?.email || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Phone</p>
-                    <p className="text-sm font-medium">{shipment.customerId?.phone || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <h5 className="text-sm font-medium mb-3">Shipment Details</h5>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500">Origin</p>
@@ -833,38 +798,24 @@ const TrackingModal = ({ isOpen, onClose, trackingNumber }) => {
 export default function ShipmentsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [shipments, setShipments] = useState([]);
   const [myShipments, setMyShipments] = useState([]);
-  const [activeView, setActiveView] = useState('all'); // 'all' or 'my'
-  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, pages: 1 });
-  const [myPagination, setMyPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
 
   // Filter State
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 20,
-    status: '',
-    mode: '',
-    search: '',
-    startDate: '',
-    endDate: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
-  });
-
-  const [myFilters, setMyFilters] = useState({
-    page: 1,
     limit: 10,
     status: '',
+    search: '',
     sort: '-createdAt'
   });
 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [activeStat, setActiveStat] = useState('all');
 
   // Stats
   const [stats, setStats] = useState({
@@ -875,24 +826,18 @@ export default function ShipmentsPage() {
     inTransit: 0
   });
 
-  const [myStats, setMyStats] = useState({
-    total: 0,
-    active: 0,
-    delivered: 0,
-    pending: 0
-  });
- 
-
-  // Fetch My Shipments (Customer)
+  // Fetch My Shipments
   const fetchMyShipments = async () => {
     setLoading(true);
     try {
-      const response = await getMyShipments(myFilters);
+      const response = await getMyShipments(filters);
       if (response.success) {
         setMyShipments(response.data || []);
-        setMyPagination(response.pagination);
+        setPagination(response.pagination || { total: 0, page: 1, limit: 10, pages: 1 });
+        
+        // Calculate stats
         const summary = getShipmentSummary(response.data || []);
-        setMyStats(summary);
+        setStats(summary);
       } else {
         toast.error(response.message);
       }
@@ -903,34 +848,17 @@ export default function ShipmentsPage() {
     }
   };
 
-  // Fetch Dashboard Stats
-  const fetchStats = async () => {
-    try {
-      const response = await getShipmentStatistics();
-      if (response.success && response.data) {
-        // Update stats if needed
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  };
-
   useEffect(() => {
-    if (activeView === 'all') {
-      fetchMyShipments();
-    } else {
-      fetchMyShipments();
-    }
-    fetchStats();
-  }, [activeView, filters.page, myFilters.page]);
+    fetchMyShipments();
+  }, [filters.page, filters.status, filters.sort]);
 
   // Handle Filter Change
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    if (activeView === 'all') {
-      setFilters(prev => ({ ...prev, [name]: value, page: 1 }));
-    } else {
-      setMyFilters(prev => ({ ...prev, [name]: value, page: 1 }));
+    setFilters(prev => ({ ...prev, [name]: value, page: 1 }));
+    
+    if (name === 'status') {
+      setActiveStat(value || 'all');
     }
   };
 
@@ -939,10 +867,16 @@ export default function ShipmentsPage() {
     setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }));
   };
 
+  // Handle Sort
+  const handleSort = (field) => {
+    const sortOrder = filters.sort === field ? `-${field}` : field;
+    setFilters(prev => ({ ...prev, sort: sortOrder, page: 1 }));
+  };
+
   // Clear Filters
   const clearFilters = () => {
-    setFilters({ page: 1, limit: 20, status: '', mode: '', search: '', startDate: '', endDate: '', sortBy: 'createdAt', sortOrder: 'desc' });
-    setMyFilters({ page: 1, limit: 10, status: '', sort: '-createdAt' });
+    setFilters({ page: 1, limit: 10, status: '', search: '', sort: '-createdAt' });
+    setActiveStat('all');
     toast.info('Filters cleared');
   };
 
@@ -954,7 +888,7 @@ export default function ShipmentsPage() {
         setShowDetailsModal(true);
         break;
       case 'timeline':
-        setShowTimelineModal(true);
+        setShowDetailsModal(true); // Will open details modal with timeline tab
         break;
       case 'track':
         if (shipment.trackingNumber) {
@@ -972,26 +906,37 @@ export default function ShipmentsPage() {
 
   // Handle Export
   const handleExport = () => {
-    if (shipments.length === 0) {
+    if (myShipments.length === 0) {
       toast.warning('No shipments to export');
       return;
     }
-    exportShipmentsToCSV(shipments);
-    toast.success(`${shipments.length} shipments exported`);
+    exportShipmentsToCSV(myShipments);
+    toast.success(`${myShipments.length} shipments exported`);
+  };
+
+  // Filter by status
+  const filterByStatus = (statusKey) => {
+    setActiveStat(statusKey);
+    setFilters(prev => ({ 
+      ...prev, 
+      status: statusKey === 'all' ? '' : statusKey,
+      page: 1 
+    }));
   };
 
   // Options
-  const statusOptions = Object.keys(STATUS_CONFIG).map(key => ({ value: key, label: STATUS_CONFIG[key].label }));
-  const modeOptions = Object.keys(SHIPMENT_MODE_CONFIG).map(key => ({ value: key, label: SHIPMENT_MODE_CONFIG[key].label }));
+  const statusOptions = Object.keys(STATUS_CONFIG).map(key => ({ 
+    value: key, 
+    label: STATUS_CONFIG[key].label 
+  }));
 
-  // Stats for current view
-  const currentStats = activeView === 'all' ? stats : myStats;
+  // Stats for display
   const visibleStats = [
-    { key: 'all', label: 'All', value: currentStats.total, icon: Package, color: 'bg-gray-100 text-gray-600' },
-    { key: 'active', label: 'Active', value: currentStats.active, icon: Activity, color: 'bg-blue-100 text-blue-600' },
-    { key: 'pending', label: 'Pending', value: currentStats.pending, icon: Clock, color: 'bg-yellow-100 text-yellow-600' },
-    { key: 'inTransit', label: 'In Transit', value: currentStats.inTransit, icon: Truck, color: 'bg-cyan-100 text-cyan-600' },
-    { key: 'delivered', label: 'Delivered', value: currentStats.delivered, icon: CheckCircleSolid, color: 'bg-green-100 text-green-600' }
+    { key: 'all', label: 'All Shipments', value: stats.total, icon: Package, color: 'bg-gray-100 text-gray-600' },
+    { key: 'active', label: 'Active', value: stats.active, icon: Activity, color: 'bg-blue-100 text-blue-600' },
+    { key: 'pending', label: 'Pending', value: stats.pending, icon: Clock, color: 'bg-yellow-100 text-yellow-600' },
+    { key: 'inTransit', label: 'In Transit', value: stats.inTransit, icon: Truck, color: 'bg-cyan-100 text-cyan-600' },
+    { key: 'delivered', label: 'Delivered', value: stats.delivered, icon: CheckCircleSolid, color: 'bg-green-100 text-green-600' }
   ];
 
   return (
@@ -1005,27 +950,22 @@ export default function ShipmentsPage() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fef2e6' }}>
                   <Package className="h-4 w-4" style={{ color: COLORS.primary }} />
                 </div>
-                <h1 className="ml-2 text-lg font-semibold text-gray-900">Shipments</h1>
+                <h1 className="ml-2 text-lg font-semibold text-gray-900">My Shipments</h1>
               </div>
-              <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg">
-                <button onClick={() => setActiveView('all')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${activeView === 'all' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}>
-                  All Shipments
-                </button>
-                <button onClick={() => setActiveView('my')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${activeView === 'my' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}>
-                  My Shipments
-                </button>
-              </div>
+              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                {stats.total} Total
+              </span>
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button variant="light" size="sm" onClick={handleExport} icon={ExportIcon}>
-                Export
+              <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={() => router.push('/Bookings/my_bookings')} 
+                icon={Plus}
+              >
+                Create New Booking
               </Button>
-              {activeView === 'all' && (
-                <Button variant="primary" size="sm" onClick={() => router.push('/shipments/create')} icon={Plus}>
-                  New Shipment
-                </Button>
-              )}
             </div>
           </div>
         </div>
@@ -1036,7 +976,15 @@ export default function ShipmentsPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           {visibleStats.map(stat => (
-            <StatCard key={stat.key} title={stat.label} value={stat.value} icon={stat.icon} color={stat.color} />
+            <StatCard 
+              key={stat.key} 
+              title={stat.label} 
+              value={stat.value} 
+              icon={stat.icon} 
+              color={stat.color}
+              active={activeStat === stat.key}
+              onClick={() => filterByStatus(stat.key)}
+            />
           ))}
         </div>
 
@@ -1047,41 +995,45 @@ export default function ShipmentsPage() {
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder={activeView === 'all' ? "Search by number, tracking, customer..." : "Search your shipments..."}
+                  placeholder="Search by shipment number, tracking number..."
                   value={filters.search}
                   onChange={handleSearch}
                   icon={Search}
                 />
               </div>
-              <Button variant={showFilters ? 'primary' : 'light'} size="md" onClick={() => setShowFilters(!showFilters)} icon={FilterIcon}>
+              <Button 
+                variant={showFilters ? 'primary' : 'light'} 
+                size="md" 
+                onClick={() => setShowFilters(!showFilters)} 
+                icon={FilterIcon}
+              >
                 Filters
-                {(filters.status || filters.mode || filters.startDate || filters.endDate) && (
+                {(filters.status || filters.search) && (
                   <span className="ml-2 bg-white text-[#E67E22] rounded-full px-2 py-0.5 text-xs">
-                    {Object.values(filters).filter(v => v && v !== '' && v !== 20 && v !== 1).length}
+                    {Object.values(filters).filter(v => v && v !== '' && v !== 10 && v !== 1).length}
                   </span>
                 )}
               </Button>
-              {(filters.search || filters.status || filters.mode || filters.startDate || filters.endDate) && (
+              {(filters.search || filters.status) && (
                 <Button variant="light" size="md" onClick={clearFilters} icon={X}>
                   Clear
                 </Button>
               )}
-              <Button variant="light" size="md" onClick={activeView === 'all' ? fetchMyShipments : fetchMyShipments} icon={RefreshCw} isLoading={loading} />
+              <Button variant="light" size="md" onClick={fetchMyShipments} icon={RefreshCw} isLoading={loading} />
             </div>
 
             {/* Advanced Filters */}
-            {showFilters && activeView === 'all' && (
-              <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Select name="status" value={filters.status} onChange={handleFilterChange} options={statusOptions} placeholder="All Statuses" label="Status" icon={Activity} />
-                <Select name="mode" value={filters.mode} onChange={handleFilterChange} options={modeOptions} placeholder="All Modes" label="Mode" icon={Truck} />
-                <Input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} label="From Date" icon={Calendar} />
-                <Input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} label="To Date" icon={Calendar} />
-              </div>
-            )}
-
-            {showFilters && activeView === 'my' && (
+            {showFilters && (
               <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select name="status" value={myFilters.status} onChange={handleFilterChange} options={statusOptions} placeholder="All Statuses" label="Status" icon={Activity} />
+                <Select 
+                  name="status" 
+                  value={filters.status} 
+                  onChange={handleFilterChange} 
+                  options={statusOptions} 
+                  placeholder="All Statuses" 
+                  label="Filter by Status" 
+                  icon={Activity} 
+                />
               </div>
             )}
           </div>
@@ -1099,7 +1051,6 @@ export default function ShipmentsPage() {
                       <ArrowUpDown className="h-4 w-4 ml-1" />
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700" onClick={() => handleSort('createdAt')}>
@@ -1117,29 +1068,34 @@ export default function ShipmentsPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="px-4 py-8 text-center">
+                    <td colSpan="8" className="px-4 py-8 text-center">
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-6 w-6 animate-spin" style={{ color: COLORS.primary }} />
-                        <span className="ml-2 text-sm text-gray-500">Loading shipments...</span>
+                        <span className="ml-2 text-sm text-gray-500">Loading your shipments...</span>
                       </div>
                     </td>
                   </tr>
-                ) : (activeView === 'all' ? shipments : myShipments).length === 0 ? (
+                ) : myShipments.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="px-4 py-8 text-center">
+                    <td colSpan="8" className="px-4 py-8 text-center">
                       <div className="flex flex-col items-center">
                         <Package className="h-12 w-12 text-gray-400 mb-3" />
                         <p className="text-sm text-gray-500">No shipments found</p>
-                        {activeView === 'all' && (
-                          <Button variant="primary" size="sm" onClick={() => router.push('/shipments/create')} className="mt-3" icon={Plus}>
-                            Create New Shipment
-                          </Button>
-                        )}
+                        <p className="text-xs text-gray-400 mt-1">Create a booking to start shipping</p>
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          onClick={() => router.push('/Bookings/my_bookings')} 
+                          className="mt-3" 
+                          icon={Plus}
+                        >
+                          Create New Booking
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  (activeView === 'all' ? shipments : myShipments).map((shipment) => {
+                  myShipments.map((shipment) => {
                     const totalWeight = calculateTotalWeight(shipment.packages);
                     const progress = getShipmentProgress(shipment.status);
                     
@@ -1147,7 +1103,11 @@ export default function ShipmentsPage() {
                       <tr key={shipment._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3">
                           <div>
-                            <div className="text-sm font-medium cursor-pointer hover:underline" style={{ color: COLORS.primary }} onClick={() => { setSelectedShipment(shipment); setShowDetailsModal(true); }}>
+                            <div 
+                              className="text-sm font-medium cursor-pointer hover:underline" 
+                              style={{ color: COLORS.primary }} 
+                              onClick={() => { setSelectedShipment(shipment); setShowDetailsModal(true); }}
+                            >
                               #{shipment.shipmentNumber || shipment._id?.slice(-8)}
                             </div>
                             {shipment.trackingNumber && (
@@ -1156,12 +1116,6 @@ export default function ShipmentsPage() {
                                 {shipment.trackingNumber}
                               </div>
                             )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-medium">
-                            {shipment.customerId?.companyName || 
-                             `${shipment.customerId?.firstName || ''} ${shipment.customerId?.lastName || ''}`.trim() || 'N/A'}
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -1203,14 +1157,48 @@ export default function ShipmentsPage() {
                 )}
               </tbody>
             </table>
-          </div> 
+          </div>
+          
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
+                  disabled={pagination.page === 1}
+                  className="p-2 text-gray-400 hover:text-[#E67E22] disabled:opacity-50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-sm text-gray-600">Page {pagination.page} of {pagination.pages}</span>
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
+                  disabled={pagination.page === pagination.pages}
+                  className="p-2 text-gray-400 hover:text-[#E67E22] disabled:opacity-50"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Modals */}
-      <ShipmentDetailsModal isOpen={showDetailsModal} onClose={() => setShowDetailsModal(false)} shipment={selectedShipment} />
+      <ShipmentDetailsModal 
+        isOpen={showDetailsModal} 
+        onClose={() => setShowDetailsModal(false)} 
+        shipment={selectedShipment} 
+      />
       
-      <TrackingModal isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} trackingNumber={trackingNumber} />
+      <TrackingModal 
+        isOpen={showTrackingModal} 
+        onClose={() => setShowTrackingModal(false)} 
+        trackingNumber={trackingNumber} 
+      />
     </div>
   );
 }

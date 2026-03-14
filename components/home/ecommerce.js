@@ -1,10 +1,22 @@
 // components/EcommerceSectors.jsx
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const EcommerceSectors = () => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [activeIndex, setActiveIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const sectors = [
     {
@@ -14,7 +26,7 @@ const EcommerceSectors = () => {
       description: "Service & Aftermarket Logistics",
       fullText: "With our worldwide inclusion, strong transportation organization and industry driving coordinations experience, our Service and Aftermarket Logistics arrangements.",
       icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       )
@@ -26,7 +38,7 @@ const EcommerceSectors = () => {
       description: "End-to-end e-commerce solutions",
       fullText: "End-to-end e-commerce logistics with smart warehousing, real-time tracking, and optimized last-mile delivery for modern digital commerce.",
       icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
         </svg>
       )
@@ -38,7 +50,7 @@ const EcommerceSectors = () => {
       description: "Service parts distribution",
       fullText: "Comprehensive after-sales logistics including parts distribution, reverse logistics, and field service coordination for maximum customer satisfaction.",
       icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       )
@@ -50,16 +62,29 @@ const EcommerceSectors = () => {
       description: "Specialized sector expertise",
       fullText: "Specialized logistics solutions designed for automotive, healthcare, technology, and industrial manufacturing sectors with industry-specific expertise.",
       icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       )
     }
   ];
 
+  // Handle touch events for mobile
+  const handleTouchStart = (index) => {
+    if (isMobile) {
+      setHoveredIndex(index);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isMobile) {
+      setTimeout(() => setHoveredIndex(null), 300);
+    }
+  };
+
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Fixed Background with Parallax Effect */}
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Fixed Background */}
       <div 
         className="absolute inset-0 bg-fixed bg-cover bg-center bg-no-repeat"
         style={{
@@ -67,194 +92,185 @@ const EcommerceSectors = () => {
         }}
       >
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/40"></div>
-        
-        {/* Animated Grid Pattern */}
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px'
-          }}
-        ></div>
-
-        {/* Floating Particles Effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${3 + Math.random() * 5}s`
-              }}
-            />
-          ))}
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/50"></div>
       </div>
 
-      {/* Scrollable Content with Smooth Scroll */}
-      <div className="relative z-10 h-full overflow-y-auto scroll-smooth">
-        <div className="min-h-full flex items-center">
-          <div className="w-full py-20 px-4 sm:px-8 lg:px-12">
-            <div className="max-w-7xl mx-auto"> 
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex items-center py-6 sm:py-12">
+        <div className="w-full px-2 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Grid - Always 2 columns on mobile, 4 on desktop */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+              {sectors.map((sector, index) => (
+                <div
+                  key={sector.id}
+                  className="group relative"
+                  onMouseEnter={() => !isMobile && setHoveredIndex(index)}
+                  onMouseLeave={() => !isMobile && setHoveredIndex(null)}
+                  onTouchStart={() => handleTouchStart(index)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
+                >
+                  {/* Card with Mobile Optimized Effects */}
+                  <div className={`
+                    relative p-3 sm:p-4 lg:p-5 rounded-xl backdrop-blur-md border
+                    transition-all duration-300 ease-out
+                    h-[160px] xs:h-[170px] sm:h-[190px] lg:h-[220px] flex flex-col
+                    ${hoveredIndex === index || !isMobile 
+                      ? 'bg-white/20 border-white/30 shadow-2xl' 
+                      : 'bg-white/10 border-white/20 shadow-xl'
+                    }
+                    ${!isMobile && 'hover:bg-white/20 hover:border-white/30 hover:shadow-2xl hover:scale-105 hover:-translate-y-2'}
+                  `}>
+                    
+                    {/* Mobile Active Indicator */}
+                    {isMobile && hoveredIndex === index && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl animate-pulse"></div>
+                    )}
 
-              {/* Sectors Grid with Enhanced Design */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {sectors.map((sector, index) => (
-                  <div
-                    key={sector.id}
-                    className="group relative transform transition-all duration-500 hover:-translate-y-2"
-                    onMouseEnter={() => {
-                      setHoveredIndex(index);
-                      setActiveIndex(index);
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredIndex(null);
-                      setActiveIndex(null);
-                    }}
-                  >
-                    {/* Card with Glassmorphism Effect */}
-                    <div className={`
-                      relative p-8 rounded-2xl transition-all duration-500
-                      ${hoveredIndex === index 
-                        ? 'bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl' 
-                        : hoveredIndex !== null 
-                          ? 'opacity-40 blur-[1px]' 
-                          : 'bg-black/20 backdrop-blur-sm'
-                      }
-                    `}>
-                      {/* Decorative Elements */}
-                      <div className="absolute top-0 right-0 w-20 h-20 overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-bl-full"></div>
-                      </div>
-
+                    {/* Header with Icon and Number */}
+                    <div className="flex items-start justify-between mb-1 sm:mb-2 relative z-10">
                       {/* Icon */}
                       <div className={`
-                        mb-6 transition-all duration-500
-                        ${hoveredIndex === index ? 'text-blue-400 scale-110' : 'text-white/60'}
+                        transition-all duration-300
+                        text-blue-400
+                        ${!isMobile && 'group-hover:scale-110 group-hover:rotate-6'}
+                        ${hoveredIndex === index && isMobile ? 'scale-110 rotate-6' : ''}
                       `}>
                         {sector.icon}
                       </div>
-
-                      {/* Number with Gradient */}
-                      <div className="text-6xl font-light bg-gradient-to-br from-white/20 to-white/5 bg-clip-text text-transparent mb-4">
+                      
+                      {/* Number */}
+                      <span className={`
+                        text-xl sm:text-2xl font-light transition-all duration-300
+                        text-white/20
+                        ${!isMobile && 'group-hover:text-white/30 group-hover:scale-110'}
+                        ${hoveredIndex === index && isMobile ? 'text-white/30 scale-110' : ''}
+                      `}>
                         {sector.number}
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-xl font-medium text-white mb-3 tracking-wide">
-                        {sector.title}
-                      </h3>
-
-                      {/* Description with Smooth Transition */}
-                      <div className="min-h-[80px]">
-                        <p className={`
-                          text-sm leading-relaxed transition-all duration-500
-                          ${hoveredIndex === index 
-                            ? 'text-white/90 translate-x-0' 
-                            : 'text-white/50'
-                          }
-                        `}>
-                          {hoveredIndex === index ? sector.fullText : sector.description}
-                        </p>
-                      </div>
-
-                      {/* Animated Learn More Link */}
-                      <div className="mt-6">
-                        <button className={`
-                          inline-flex items-center gap-2 text-sm font-light transition-all duration-300
-                          ${hoveredIndex === index ? 'text-blue-400' : 'text-white/30'}
-                        `}>
-                          <span>Learn More</span>
-                          <svg 
-                            className={`
-                              w-4 h-4 transition-all duration-300
-                              ${hoveredIndex === index ? 'translate-x-1' : ''}
-                            `} 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                          </svg>
-                        </button>
-                      </div>
+                      </span>
                     </div>
 
-                    {/* Animated Border Line */}
+                    {/* Title */}
+                    <h3 className={`
+                      text-xs sm:text-sm lg:text-base font-medium mb-1 sm:mb-2 line-clamp-2
+                      text-white
+                      ${!isMobile && 'group-hover:translate-x-1'}
+                      ${hoveredIndex === index && isMobile ? 'translate-x-1' : ''}
+                    `}>
+                      {sector.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className={`
+                      text-[10px] xs:text-xs sm:text-xs lg:text-sm leading-relaxed line-clamp-3
+                      text-white/70
+                      ${!isMobile && 'group-hover:text-white/80'}
+                      ${hoveredIndex === index && isMobile ? 'text-white/80' : ''}
+                    `}>
+                      {sector.fullText}
+                    </p>
+
+                    {/* Bottom Border */}
                     <div className={`
-                      absolute -bottom-2 left-0 right-0 h-0.5 transition-all duration-500
-                      ${hoveredIndex === index 
-                        ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-100' 
-                        : 'scale-x-0 bg-transparent'
-                      }
+                      absolute bottom-0 left-2 right-2 sm:left-3 sm:right-3 h-0.5 
+                      bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+                      transition-all duration-300
+                      ${!isMobile && 'group-hover:scale-x-100 group-hover:opacity-100'}
+                      ${hoveredIndex === index && isMobile ? 'scale-x-100 opacity-100' : 'scale-x-50 opacity-50'}
                     `}></div>
 
-                    {/* Glow Effect */}
-                    <div className={`
-                      absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl opacity-0 blur-xl transition-opacity duration-500 -z-10
-                      ${hoveredIndex === index ? 'opacity-30' : ''}
-                    `}></div>
+                    {/* Corner Accents - Hidden on mobile */}
+                    {!isMobile && (
+                      <>
+                        <div className="absolute top-2 left-2 w-2 h-2 lg:w-3 lg:h-3 border-t-2 border-l-2 border-blue-400/30 rounded-tl-lg transition-all duration-300 group-hover:border-blue-400/60"></div>
+                        <div className="absolute bottom-2 right-2 w-2 h-2 lg:w-3 lg:h-3 border-b-2 border-r-2 border-purple-400/30 rounded-br-lg transition-all duration-300 group-hover:border-purple-400/60"></div>
+                      </>
+                    )}
                   </div>
-                ))}
-              </div> 
+
+                  {/* Glow Effect - Optimized for mobile */}
+                  <div className={`
+                    absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 
+                    rounded-xl transition-all duration-300 -z-10
+                    ${!isMobile && 'opacity-0 group-hover:opacity-30 group-hover:blur-xl'}
+                    ${hoveredIndex === index && isMobile ? 'opacity-30 blur-xl' : 'opacity-0'}
+                  `}></div>
+
+                  {/* Ripple Effects - Only on desktop hover */}
+                  {!isMobile && hoveredIndex === index && (
+                    <>
+                      <div className="absolute inset-0 rounded-xl border-2 border-blue-400/30 animate-ping-slow"></div>
+                      <div className="absolute inset-0 rounded-xl border border-purple-400/20 animate-ping-slower"></div>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Custom Scrollbar Styles */}
+      {/* Custom Styles */}
       <style jsx>{`
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Custom breakpoint for extra small devices */
+        @media (min-width: 375px) {
+          .xs\\:h-\\[170px\\] {
+            height: 170px;
+          }
+          .xs\\:text-xs {
+            font-size: 0.75rem;
+          }
+        }
+
+        /* Animation Keyframes */
+        @keyframes ping-slow {
+          75%, 100% {
+            transform: scale(1.2);
+            opacity: 0;
+          }
+        }
+        
+        .animate-ping-slow {
+          animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
+        .animate-ping-slower {
+          animation: ping-slow 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        /* Mobile Touch Optimization */
+        @media (max-width: 640px) {
+          .group:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+          }
+        }
+
+        /* Smooth Scrolling */
         .overflow-y-auto::-webkit-scrollbar {
-          width: 6px;
+          width: 4px;
         }
         .overflow-y-auto::-webkit-scrollbar-track {
           background: rgba(255, 255, 255, 0.03);
-          border-radius: 3px;
         }
         .overflow-y-auto::-webkit-scrollbar-thumb {
           background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
-          border-radius: 3px;
-        }
-        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(to bottom, #2563eb, #7c3aed);
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 1s ease-out forwards;
-        }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fadeInUp {
-          animation: fadeInUp 0.8s ease-out forwards;
-          opacity: 0;
+          border-radius: 2px;
         }
       `}</style>
     </div>

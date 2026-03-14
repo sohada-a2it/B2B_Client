@@ -104,9 +104,11 @@ export default function WhyChooseUs() {
             <p className="text-gray-600 leading-relaxed mb-8">
               {features[active].desc}
             </p>
-
-            {/* Counter Section */}
-            <div className="grid grid-cols-2 gap-6">
+          </div>
+          
+        </div>
+         {/* Counter Section */}
+            <div className="grid grid-cols-4 gap-6 mt-6">
               <div className="bg-white p-6 rounded-xl shadow text-center">
                 <h4 className="text-3xl font-bold text-third">
                   <Counter end={600} suffix="+" />
@@ -143,9 +145,6 @@ export default function WhyChooseUs() {
                 </p>
               </div>
             </div>
-
-          </div>
-        </div>
       </div>
     </section>
   );

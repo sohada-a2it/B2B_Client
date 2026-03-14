@@ -197,7 +197,7 @@ export default function ProjectTabs() {
         </motion.div>
 
         {/* View All Button */}
-        {filtered.length > 0 && (
+        {filtered.length > 9 && (
           <div className="text-center mt-12">
             <motion.button
               whileHover={{ scale: 1.05 }}

@@ -203,7 +203,7 @@ const [ref, inView] = useInView({
                 )}
                 
                 {/* Social Links Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6 gap-3">
+                {/* <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6 gap-3">
                   <a
                     href={member.social.linkedin}
                     className="bg-white p-2.5 rounded-full hover:bg-[#0077b5] hover:text-white transition-all duration-300 transform hover:scale-110"
@@ -222,7 +222,7 @@ const [ref, inView] = useInView({
                   >
                     <FaFacebookF className="w-4 h-4" />
                   </a>
-                </div>
+                </div> */}
 
                 {/* Experience Badge */}
                 <div className="absolute top-4 right-4 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -250,7 +250,7 @@ const [ref, inView] = useInView({
                       {member.email}
                     </a>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-600 group/phone">
+                  {/* <div className="flex items-center gap-3 text-gray-600 group/phone">
                     <FaPhone className="w-4 h-4 flex-shrink-0 text-gray-400 group-hover/phone:text-primary transition-colors" />
                     <a
                       href={`tel:${member.phone}`}
@@ -258,7 +258,7 @@ const [ref, inView] = useInView({
                     >
                       {member.phone}
                     </a>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

@@ -107,43 +107,39 @@ const StylishPartnerSlider = () => {
   const activePartner = partners[currentSlide];
 
   return (
-    <div className="relative p-6 my-10 rounded-3xl shadow-2xl max-w-5xl mx-auto border border-gray-100">
-      {/* Header - Compact */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="space-y-0.5">
-          <h2 className="text-xl font-light text-gray-600 tracking-wide">
+    <div className="bg-white relative p-4 sm:p-6 my-4 sm:my-8 rounded-2xl shadow-xl max-w-full mx-auto border border-gray-100">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-0">
+        <div className="space-y-0">
+          <h2 className="text-xs sm:text-sm font-light text-gray-600 tracking-wide">
             Collaborating with
           </h2>
           <h1
-            className="text-3xl font-black tracking-tight transition-colors duration-300"
+            className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight transition-colors duration-300"
             style={{ color: activePartner.color }}
           >
             THE BEST
           </h1>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:gap-3">
           <button
             onClick={handlePrev}
-            className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-100 group"
+            className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:scale-110"
           >
-            <span className="text-gray-600 group-hover:text-gray-900 text-lg">
-              ←
-            </span>
+            <span className="text-gray-600 text-sm sm:text-base">←</span>
           </button>
           <button
             onClick={handleNext}
-            className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-100 group"
+            className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:scale-110"
           >
-            <span className="text-gray-600 group-hover:text-gray-900 text-lg">
-              →
-            </span>
+            <span className="text-gray-600 text-sm sm:text-base">→</span>
           </button>
         </div>
       </div>
 
-      {/* All Partners Grid - 5x2 = 10 items */}
-      <div className="grid grid-cols-5 grid-rows-2 gap-3">
+      {/* Responsive Grid - Mobile: 5x2, Desktop: 10x1 full width */}
+      <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-10 gap-1.5 sm:gap-2 md:gap-3">
         {partners.map((partner) => {
           const isActive = partner.id === activePartner.id;
           const isHovered = hoveredId === partner.id;
@@ -159,19 +155,19 @@ const StylishPartnerSlider = () => {
               }
               onMouseEnter={() => setHoveredId(partner.id)}
               onMouseLeave={() => setHoveredId(null)}
-              className="relative h-36 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 group"
+              className="relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 sm:hover:scale-110"
               style={{
-                transform: isActive ? "scale(1.02)" : "scale(1)",
+                transform: isActive ? "scale(1.02) sm:scale(1.05)" : "scale(1)",
                 boxShadow: isActive
-                  ? `0 15px 25px -10px ${partner.color}40`
-                  : "0 5px 15px -5px rgba(0,0,0,0.1)",
+                  ? `0 8px 16px -6px ${partner.color}80`
+                  : "0 2px 8px -4px rgba(0,0,0,0.1)",
               }}
             >
-              {/* Image with fade transition - No overlay */}
+              {/* Image with fade transition */}
               <div className="absolute inset-0">
                 {/* Inactive Image */}
                 <div
-                  className={`absolute inset-0 transition-opacity duration-500 ${
+                  className={`absolute inset-0 transition-opacity duration-300 ${
                     showActiveImage ? "opacity-0" : "opacity-100"
                   }`}
                 >
@@ -180,13 +176,13 @@ const StylishPartnerSlider = () => {
                     alt={partner.title}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 50vw, 20vw"
+                    sizes="(max-width: 640px) 20vw, (max-width: 768px) 10vw, 8vw"
                   />
                 </div>
                 
                 {/* Active Image */}
                 <div
-                  className={`absolute inset-0 transition-opacity duration-500 ${
+                  className={`absolute inset-0 transition-opacity duration-300 ${
                     showActiveImage ? "opacity-100" : "opacity-0"
                   }`}
                 >
@@ -195,7 +191,7 @@ const StylishPartnerSlider = () => {
                     alt={partner.title}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 50vw, 20vw"
+                    sizes="(max-width: 640px) 20vw, (max-width: 768px) 10vw, 8vw"
                   />
                 </div>
               </div>
@@ -203,10 +199,10 @@ const StylishPartnerSlider = () => {
               {/* Active Indicator Border */}
               {isActive && (
                 <div
-                  className="absolute inset-0 rounded-xl border-3 transition-all duration-300"
+                  className="absolute inset-0 rounded-lg border-2 sm:border-3 transition-all duration-300"
                   style={{
                     borderColor: partner.color,
-                    boxShadow: `0 0 15px ${partner.color}`,
+                    boxShadow: `0 0 12px ${partner.color}`,
                   }}
                 />
               )}
@@ -215,39 +211,67 @@ const StylishPartnerSlider = () => {
         })}
       </div>
 
-      {/* Bottom Bar with Counter - Compact */}
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex gap-1.5">
+      {/* Bottom Navigation - Responsive */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-4 sm:mt-6 gap-3 sm:gap-0">
+        <div className="flex gap-1.5 sm:gap-2 order-2 sm:order-1">
           {partners.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className="group focus:outline-none"
+              className="focus:outline-none group"
             >
               <div
-                className={`h-1 rounded-full transition-all duration-300 ${
+                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 group-hover:bg-orange-400 ${
                   index === currentSlide
-                    ? "w-6 bg-orange-500"
-                    : "w-2 bg-gray-300 group-hover:bg-gray-400"
+                    ? "w-5 sm:w-8 bg-orange-500"
+                    : "w-1.5 sm:w-2 bg-gray-300 group-hover:w-3"
                 }`}
               />
             </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
           <span
-            className="text-xl font-bold transition-colors duration-300"
+            className="text-base sm:text-lg md:text-xl font-bold transition-colors duration-300"
             style={{ color: activePartner.color }}
           >
             {(currentSlide + 1).toString().padStart(2, "0")}
           </span>
-          <span className="text-gray-400 text-xs">/</span>
-          <span className="text-gray-400 text-xs">
+          <span className="text-gray-400 text-xs sm:text-sm">/</span>
+          <span className="text-gray-400 text-xs sm:text-sm">
             {partners.length.toString().padStart(2, "0")}
           </span>
         </div>
-      </div> 
+      </div>
+
+      {/* Active Partner Info - Responsive */}
+      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs sm:text-sm text-gray-500 tracking-wide">{activePartner.category}</p>
+            <p 
+              className="text-sm sm:text-base md:text-lg font-semibold transition-colors duration-300"
+              style={{ color: activePartner.color }}
+            >
+              {activePartner.title}
+            </p>
+          </div>
+          
+          {/* Desktop Quick Navigation */}
+          <div className="hidden sm:flex gap-2 mt-2 sm:mt-0">
+            {partners.slice(0, 5).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  idx === currentSlide ? 'bg-orange-500 w-4' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

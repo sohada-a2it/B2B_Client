@@ -154,7 +154,7 @@ const TestimonialsSection = () => {
           </p>
           
           {/* ALL TESTIMONIALS link - smaller */}
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <button 
               className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border-2 font-medium text-sm transition-all duration-300 hover:shadow-lg transform hover:scale-105"
               style={{ 
@@ -170,7 +170,7 @@ const TestimonialsSection = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Elegant divider - smaller */}

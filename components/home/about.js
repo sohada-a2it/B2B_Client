@@ -4,7 +4,7 @@ import { FaAward } from "react-icons/fa";
 
 export default function about() {
   return (
-    <div className="relative overflow-hidden">
+    <div className="bg-white relative overflow-hidden">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
     <div className="grid lg:grid-cols-2 gap-12 items-center">
       {/* Left Content */}

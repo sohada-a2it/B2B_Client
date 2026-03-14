@@ -155,7 +155,9 @@ const PricingPlans = () => {
                   ></div>
                 </div>
                 
-                <span className="relative z-10">GET STARTED TODAY</span>
+                <a href="/footer/booking">
+                   <span className="relative z-10">GET STARTED TODAY</span>
+                </a>
                 <i className="fas fa-arrow-right text-xs relative z-10 group-hover/btn:translate-x-2 group-hover/btn:scale-110 transition-all duration-300"></i>
                 
                 {/* Ripple effect on hover */}
