@@ -857,7 +857,7 @@ export default function EmployeeCreateBooking() {
         localStorage.removeItem('employee_booking_draft');
         
         setTimeout(() => {
-          router.push('/Booking/my_bookings');
+          router.push('/Bookings/my_bookings');
         }, 2000);
       } else {
         setServerErrors([{ msg: response.message || 'Failed to create booking' }]);

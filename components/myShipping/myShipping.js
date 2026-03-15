@@ -1052,7 +1052,7 @@ export default function ShipmentsPage() {
                     </div>
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
+                  {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th> */}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700" onClick={() => handleSort('createdAt')}>
                     <div className="flex items-center">
                       Date
@@ -1061,7 +1061,7 @@ export default function ShipmentsPage() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Packages</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                  {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th> */}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -1125,9 +1125,9 @@ export default function ShipmentsPage() {
                             <span className="font-medium">{shipment.shipmentDetails?.destination || 'N/A'}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        {/* <td className="px-4 py-3">
                           <ModeBadge mode={shipment.shipmentDetails?.shipmentType} />
-                        </td>
+                        </td> */}
                         <td className="px-4 py-3">
                           <div className="text-xs text-gray-500">
                             {formatShipmentDate(shipment.createdAt, 'short')}
@@ -1143,11 +1143,11 @@ export default function ShipmentsPage() {
                         <td className="px-4 py-3">
                           <StatusBadge status={shipment.status} size="sm" />
                         </td>
-                        <td className="px-4 py-3">
+                        {/* <td className="px-4 py-3">
                           <div className="w-24">
                             <ProgressBar progress={progress} />
                           </div>
-                        </td>
+                        </td> */}
                         <td className="px-4 py-3">
                           <ActionMenu shipment={shipment} onAction={handleAction} />
                         </td>

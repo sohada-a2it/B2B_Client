@@ -262,13 +262,13 @@ const InvoiceCard = ({ invoice, onView, onDownload }) => {
             <Eye className="h-4 w-4 mr-2" />
             View
           </button>
-          <button
+          {/* <button
             onClick={() => onDownload(invoice._id)}
             className="px-3 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
             title="Download PDF"
           >
             <Download className="h-4 w-4 text-gray-600" />
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

@@ -139,6 +139,11 @@ const Navbar = () => {
       icon: <UserCircle className="w-4 h-4" /> 
     },
     { 
+      label: 'Create Bookings', 
+      href: '/Bookings/create_bookings', 
+      icon: <ClipboardList className="w-4 h-4" /> 
+    },
+    { 
       label: 'My Bookings', 
       href: '/Bookings/my_bookings', 
       icon: <ClipboardList className="w-4 h-4" /> 
@@ -202,7 +207,7 @@ const Navbar = () => {
         transition={{ duration: 0.3 }}
         className={`fixed ${navbarTopPosition} left-0 right-0 z-[9999] transition-all duration-300 w-full ${
           scrolled 
-            ? 'bg-gray-400 py-2 shadow-lg' 
+            ? 'bg-white py-2 shadow-lg' 
             : 'bg-secondary py-4'
         }`} 
       >
@@ -245,11 +250,11 @@ const Navbar = () => {
                   {item.dropdown ? (
                     <button
                       className={`flex items-center space-x-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group ${
-                        scrolled ? 'text-white hover:text-white/80' : 'text-gray-700 hover:text-[#246092]'
+                        scrolled ? 'text-third hover:text-primary' : 'text-gray-700 hover:text-[#246092]'
                       }`}
                     >
                       <span className={`opacity-60 group-hover:opacity-100 transition-opacity ${
-                        scrolled ? 'text-white' : ''
+                        scrolled ? 'text-primary' : ''
                       }`}>
                         {item.icon}
                       </span>
@@ -260,7 +265,7 @@ const Navbar = () => {
                           transition={{ duration: 0.2 }}
                         >
                           <ChevronDown className={`w-3 h-3 ${
-                            scrolled ? 'text-white' : ''
+                            scrolled ? 'text-primary' : ''
                           }`} />
                         </motion.div>
                       )}
@@ -270,11 +275,11 @@ const Navbar = () => {
                       <motion.div
                         whileHover={{ y: -2 }}
                         className={`flex items-center space-x-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group ${
-                          scrolled ? 'text-white hover:text-white/80' : 'text-gray-700 hover:text-[#246092]'
+                          scrolled ? 'text-third hover:text-primary' : 'text-gray-700 hover:text-[#246092]'
                         }`}
                       >
                         <span className={`opacity-60 group-hover:opacity-100 transition-opacity ${
-                          scrolled ? 'text-white' : ''
+                          scrolled ? 'text-primary' : ''
                         }`}>
                           {item.icon}
                         </span>
@@ -306,7 +311,7 @@ const Navbar = () => {
                     onClick={() => router.push('/tracking-number')}
                     className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 ${
                       scrolled 
-                        ? 'bg-white text-third' 
+                        ? 'bg-primary text-white' 
                         : 'bg-fourth text-white hover:bg-primary'
                     }`}
                   >
@@ -324,7 +329,7 @@ const Navbar = () => {
                       whileTap={{ scale: 0.95 }}
                       className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 ${
                         scrolled 
-                          ? 'bg-white text-third' 
+                          ? 'bg-primary text-white' 
                           : 'bg-fourth text-white hover:bg-primary'
                       }`}
                     >

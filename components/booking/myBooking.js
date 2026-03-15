@@ -1,7 +1,7 @@
 // components/bookings/CustomerBookings.js
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -9,82 +9,52 @@ import {
   getMyBookings,
   getMyBookingById,
   getMyBookingTimeline,
-  getMyBookingInvoices,
+  getMyBookingInvoice,
   getMyBookingQuote,
   getMyBookingsSummary,
   downloadBookingDocument,
   acceptQuote,
   rejectQuote,
   cancelBooking,
+  getStatusColor,
+  getPricingStatusColor,
   getStatusDisplayText,
   getPricingStatusDisplayText,
   getShipmentTypeDisplay,
-  getOriginDisplay,
-  getDestinationDisplay,
-  getShippingModeDisplay,
+  getCourierCompanyDisplay,
+  getSenderName,
+  getReceiverName,
+  formatAddress,
   formatDate,
   formatCurrency,
   isQuoteValid,
   getQuoteDaysRemaining,
   canCancelBooking,
   canRespondToQuote,
-  calculateCargoTotals
+  calculatePackageTotals,
+  formatPackageDetails
 } from '@/Api/booking';
 
 // Icons
 import {
-  Package,
-  Search,
-  Filter,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Download,
-  Plus,
-  Calendar,
-  MapPin,
-  User,
-  Truck,
-  Ship,
-  Plane,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  RefreshCw,
-  Loader2,
-  MoreVertical,
-  X,
-  Hash,
-  DollarSign,
-  ChevronsLeft,
-  ChevronsRight,
-  Phone,
-  Mail,
-  Activity,
-  FileText,
-  Home,
-  Tag,
-  Calendar as CalendarIcon,
-  Copy,
-  MessageSquare,
-  Box,
-  ArrowRight,
-  ArrowLeft,
-  Clock as ClockSolid,
-  Info,
-  ThumbsUp,
-  ThumbsDown,
-  Ban,
-  Grid,
-  List,
-  ArrowUpDown,
-  Receipt,
-  AlertTriangle,
-  CheckCircle as CheckCircleSolid,
-  XCircle as XCircleSolid,
-  TrendingUp
+  Package, Search, Filter, ChevronDown, ChevronLeft, ChevronRight,
+  Eye, Download, Plus, Calendar, MapPin, User,
+  Truck, Ship, Plane, Clock, CheckCircle, XCircle,
+  AlertCircle, RefreshCw, Loader2, MoreVertical,
+  ArrowUpDown, Download as ExportIcon, Filter as FilterIcon,
+  X, Globe, Hash, DollarSign,
+  ChevronsLeft, ChevronsRight, Trash2, Check,
+  Phone, Mail, BarChart3, Activity, FileText,
+  Home, Briefcase, Tag, Calendar as CalendarIcon,
+  Save, Printer, Share2, Link, Copy, Star,
+  MessageSquare, Paperclip, Camera, Upload,
+  Users, Box, Map, TrendingUp, PieChart,
+  Sun, Moon, Settings, Bell, HelpCircle,
+  Maximize2, Minimize2, Grid, List,
+  AlertTriangle, Info, CheckCircle as CheckCircleSolid,
+  XCircle as XCircleSolid, Clock as ClockSolid,
+  Receipt, FileSpreadsheet, CreditCard, UserPlus, Building, Ruler,
+  Scale, ChevronUp, ThumbsUp, ThumbsDown, Ban, ArrowRight
 } from 'lucide-react';
 
 // ==================== COLOR CONSTANTS ====================
@@ -122,11 +92,11 @@ const STATUS_CONFIG = {
     icon: CheckCircle,
     progress: 40
   },
-  pickup_scheduled: {
-    label: 'Pickup Scheduled',
-    color: 'bg-purple-50 text-purple-700 border-purple-200',
-    icon: Calendar,
-    progress: 50
+  pending: {
+    label: 'Pending',
+    color: 'bg-gray-50 text-gray-700 border-gray-200',
+    icon: Clock,
+    progress: 45
   },
   received_at_warehouse: {
     label: 'Received at Warehouse',
@@ -135,21 +105,15 @@ const STATUS_CONFIG = {
     progress: 60
   },
   consolidation_in_progress: {
-    label: 'Consolidation in Progress',
+    label: 'Consolidation',
     color: 'bg-amber-50 text-amber-700 border-amber-200',
     icon: Box,
     progress: 70
   },
   loaded_in_container: {
-    label: 'Loaded in Container',
+    label: 'Loaded',
     color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     icon: Ship,
-    progress: 75
-  },
-  loaded_on_flight: {
-    label: 'Loaded on Flight',
-    color: 'bg-sky-50 text-sky-700 border-sky-200',
-    icon: Plane,
     progress: 75
   },
   in_transit: {
@@ -159,13 +123,13 @@ const STATUS_CONFIG = {
     progress: 80
   },
   arrived_at_destination: {
-    label: 'Arrived at Destination',
+    label: 'Arrived',
     color: 'bg-teal-50 text-teal-700 border-teal-200',
     icon: MapPin,
     progress: 85
   },
   customs_clearance: {
-    label: 'Customs Clearance',
+    label: 'Customs',
     color: 'bg-lime-50 text-lime-700 border-lime-200',
     icon: FileText,
     progress: 90
@@ -200,7 +164,7 @@ const STATUS_CONFIG = {
 const SHIPMENT_TYPE_ICONS = {
   air_freight: Plane,
   sea_freight: Ship,
-  express_courier: Package
+  express_courier: Truck
 };
 
 const SHIPMENT_TYPE_COLORS = {
@@ -212,29 +176,17 @@ const SHIPMENT_TYPE_COLORS = {
 // ==================== COMPONENTS ====================
 
 // Button Component
-const Button = ({
-  children,
-  type = 'button',
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  disabled = false,
-  onClick,
-  className = '',
-  icon = null,
-  iconPosition = 'left',
-  fullWidth = false
-}) => {
+const Button = ({ children, type = 'button', variant = 'primary', size = 'md', isLoading = false, disabled = false, onClick, className = '', icon = null, iconPosition = 'left', fullWidth = false }) => {
   const baseClasses = 'rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 inline-flex items-center justify-center';
   
   const variants = {
-    primary: `bg-[#E67E22] text-white hover:bg-[#d35400] focus:ring-[#E67E22] shadow-sm`,
-    secondary: `bg-[#3C719D] text-white hover:bg-[#2c5a8c] focus:ring-[#3C719D]`,
-    outline: `border-2 border-[#E67E22] text-[#E67E22] hover:bg-[#fef2e6] focus:ring-[#E67E22]`,
+    primary: `bg-[${COLORS.primary}] text-white hover:bg-[#d35400] focus:ring-[${COLORS.primary}] shadow-sm`,
+    secondary: `bg-[${COLORS.secondary}] text-white hover:bg-[#2c5a8c] focus:ring-[${COLORS.secondary}]`,
+    outline: `border-2 border-[${COLORS.primary}] text-[${COLORS.primary}] hover:bg-[${COLORS.primaryLight}] focus:ring-[${COLORS.primary}]`,
     light: `bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500`,
-    success: `bg-[#10b981] text-white hover:bg-[#0d9488] focus:ring-[#10b981]`,
-    danger: `bg-[#ef4444] text-white hover:bg-[#dc2626] focus:ring-[#ef4444]`,
-    warning: `bg-[#f59e0b] text-white hover:bg-[#d97706] focus:ring-[#f59e0b]`,
+    success: `bg-[${COLORS.success}] text-white hover:bg-[#0d9488] focus:ring-[${COLORS.success}]`,
+    danger: `bg-[${COLORS.danger}] text-white hover:bg-[#dc2626] focus:ring-[${COLORS.danger}]`,
+    warning: `bg-[${COLORS.warning}] text-white hover:bg-[#d97706] focus:ring-[${COLORS.warning}]`,
     ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500'
   };
 
@@ -242,8 +194,7 @@ const Button = ({
     xs: 'px-2.5 py-1.5 text-xs',
     sm: 'px-3 py-2 text-sm',
     md: 'px-4 py-2.5 text-sm',
-    lg: 'px-5 py-3 text-base',
-    xl: 'px-6 py-3.5 text-base'
+    lg: 'px-5 py-3 text-base'
   };
 
   return (
@@ -270,20 +221,7 @@ const Button = ({
 };
 
 // Input Component
-const Input = ({
-  type = 'text',
-  name,
-  value,
-  onChange,
-  placeholder,
-  label,
-  error,
-  icon: Icon,
-  required = false,
-  disabled = false,
-  className = '',
-  ...props
-}) => {
+const Input = ({ type = 'text', name, value, onChange, placeholder, label, error, icon: Icon, required = false, disabled = false, className = '', ...props }) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -306,7 +244,7 @@ const Input = ({
           disabled={disabled}
           className={`
             w-full px-3 py-2 text-sm border rounded-lg shadow-sm
-            focus:outline-none focus:ring-2 focus:ring-[#E67E22] focus:border-transparent
+            focus:outline-none focus:ring-2 focus:ring-[${COLORS.primary}] focus:border-transparent
             ${Icon ? 'pl-10' : ''}
             ${error ? 'border-red-300' : 'border-gray-300'}
             ${disabled ? 'bg-gray-50 cursor-not-allowed' : ''}
@@ -321,19 +259,7 @@ const Input = ({
 };
 
 // Select Component
-const Select = ({
-  name,
-  value,
-  onChange,
-  options,
-  placeholder = 'Select option',
-  label,
-  error,
-  icon: Icon,
-  required = false,
-  disabled = false,
-  className = ''
-}) => {
+const Select = ({ name, value, onChange, options, placeholder = 'Select option', label, error, icon: Icon, required = false, disabled = false, className = '' }) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -354,7 +280,7 @@ const Select = ({
           disabled={disabled}
           className={`
             w-full px-3 py-2 text-sm border rounded-lg shadow-sm appearance-none
-            focus:outline-none focus:ring-2 focus:ring-[#E67E22] focus:border-transparent
+            focus:outline-none focus:ring-2 focus:ring-[${COLORS.primary}] focus:border-transparent
             ${Icon ? 'pl-10' : 'pl-3'}
             pr-10
             ${error ? 'border-red-300' : 'border-gray-300'}
@@ -381,7 +307,7 @@ const Select = ({
 // Status Badge Component
 const StatusBadge = ({ status, size = 'md' }) => {
   const config = STATUS_CONFIG[status] || {
-    label: getStatusDisplayText(status) || status,
+    label: getStatusDisplayText(status),
     color: 'bg-gray-50 text-gray-700 border-gray-200',
     icon: Clock
   };
@@ -446,14 +372,20 @@ const ShipmentTypeBadge = ({ type }) => {
 };
 
 // Stat Card Component
-const StatCard = ({ title, value, icon: Icon, color, subtitle }) => {
+const StatCard = ({ title, value, icon: Icon, color, onClick, active }) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow">
+    <div 
+      onClick={onClick}
+      className={`
+        bg-white rounded-xl border shadow-sm p-4 cursor-pointer transition-all
+        hover:shadow-md hover:border-[${COLORS.primary}]/30
+        ${active ? `border-[${COLORS.primary}] ring-2 ring-[${COLORS.primary}]/20` : 'border-gray-200'}
+      `}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-500 mb-1">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value || 0}</p>
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-xl font-bold text-gray-900">{value}</p>
         </div>
         <div className={`p-3 rounded-xl ${color}`}>
           <Icon className="h-5 w-5" />
@@ -463,126 +395,31 @@ const StatCard = ({ title, value, icon: Icon, color, subtitle }) => {
   );
 };
 
-// Booking Card Component
-const BookingCard = ({ booking, onView, onAction }) => {
-  const cargoTotals = calculateCargoTotals(booking.cargoDetails || []);
-  const quoteValid = booking.quotedPrice ? isQuoteValid(booking.quotedPrice) : false;
-
+// Progress Bar Component
+const ProgressBar = ({ progress, height = 'h-2', showLabel = false }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
-    >
-      <div className="p-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <div className="flex items-center">
-              <h3 
-                className="text-sm font-semibold cursor-pointer hover:underline text-[#E67E22]"
-                onClick={() => onView(booking)}
-              >
-                #{booking.bookingNumber || booking._id?.slice(-8).toUpperCase()}
-              </h3>
-              {booking.trackingNumber && (
-                <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                  {booking.trackingNumber}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {booking.customer?.companyName || 
-               `${booking.customer?.firstName || ''} ${booking.customer?.lastName || ''}`.trim() || 
-               'N/A'}
-            </p>
-          </div>
-          <button
-            onClick={() => onView(booking)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-            title="View Details"
-          >
-            <Eye className="h-4 w-4 text-gray-500" />
-          </button>
+    <div className="w-full">
+      {showLabel && (
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs text-gray-500">Progress</span>
+          <span className="text-xs font-medium" style={{ color: COLORS.primary }}>{progress}%</span>
         </div>
-
-        {/* Route */}
-        <div className="flex items-center text-xs mb-3 p-2 bg-gray-50 rounded-lg">
-          <span className="font-medium text-gray-900">
-            {getOriginDisplay(booking.shipmentDetails?.origin) || 'N/A'}
-          </span>
-          <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
-          <span className="font-medium text-gray-900">
-            {getDestinationDisplay(booking.shipmentDetails?.destination) || 'N/A'}
-          </span>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div>
-            <p className="text-xs text-gray-500">Type</p>
-            <ShipmentTypeBadge type={booking.shipmentDetails?.shipmentType} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Created</p>
-            <p className="text-xs font-medium">{formatDate(booking.createdAt, 'short')}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Cargo</p>
-            <p className="text-xs font-medium">
-              {cargoTotals.totalCartons} ctns • {cargoTotals.totalWeight.toFixed(1)} kg
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Quote</p>
-            {booking.quotedPrice ? (
-              <p className="text-xs font-medium text-green-600">
-                {formatCurrency(booking.quotedPrice.amount, booking.quotedPrice.currency)}
-              </p>
-            ) : (
-              <p className="text-xs text-gray-400">Pending</p>
-            )}
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <StatusBadge status={booking.status} size="sm" />
-          <PricingStatusBadge status={booking.pricingStatus} />
-        </div>
-
-        {/* Quote Action (if applicable) */}
-        {booking.pricingStatus === 'quoted' && quoteValid && booking.status === 'price_quoted' && (
-          <div className="mt-3 flex space-x-2">
-            <Button
-              size="xs"
-              variant="success"
-              onClick={() => onAction('accept', booking)}
-              icon={<ThumbsUp className="h-3 w-3" />}
-              fullWidth
-            >
-              Accept
-            </Button>
-            <Button
-              size="xs"
-              variant="danger"
-              onClick={() => onAction('reject', booking)}
-              icon={<ThumbsDown className="h-3 w-3" />}
-              fullWidth
-            >
-              Reject
-            </Button>
-          </div>
-        )}
+      )}
+      <div className={`w-full bg-gray-200 rounded-full ${height}`}>
+        <div 
+          className="rounded-full transition-all duration-500"
+          style={{ 
+            width: `${progress}%`, 
+            backgroundColor: progress === 100 ? COLORS.success : COLORS.primary,
+            height: '100%'
+          }}
+        />
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-// ==================== MODALS ====================
-
-// Modal Component with blur overlay
+// Modal Component
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   if (!isOpen) return null;
 
@@ -595,9 +432,11 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-90 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-   
+        {/* <div className="fixed inset-0 transition-opacity" onClick={onClose}>
+          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div> */}
 
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
 
@@ -606,20 +445,17 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className={`inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle ${sizes[size]} w-full`}
+          className={`inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle ${sizes[size]} w-full`}
         >
-          {/* Header */}
-          <div className="px-6 py-4 bg-gradient-to-r from-orange-50 to-white border-b border-gray-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-white/80 rounded-lg transition-all hover:scale-110"
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <X className="h-5 w-5 text-gray-500" />
             </button>
           </div>
-          
-          {/* Content */}
           <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
             {children}
           </div>
@@ -629,12 +465,269 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   );
 };
 
+// Timeline Modal
+const TimelineModal = ({ isOpen, onClose, bookingId }) => {
+  const [timeline, setTimeline] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && bookingId) {
+      fetchTimeline();
+    }
+  }, [isOpen, bookingId]);
+
+  const fetchTimeline = async () => {
+    setLoading(true);
+    try {
+      const result = await getMyBookingTimeline(bookingId);
+      if (result.success) {
+        setTimeline(result.data?.timeline || []);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch timeline');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Booking Timeline" size="lg">
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: COLORS.primary }} />
+          <span className="ml-2 text-sm text-gray-500">Loading timeline...</span>
+        </div>
+      ) : timeline.length > 0 ? (
+        <div className="space-y-4">
+          {timeline.map((event, index) => (
+            <div key={index} className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  {STATUS_CONFIG[event.status]?.label || event.status}
+                </p>
+                {event.description && (
+                  <p className="text-xs text-gray-500">{event.description}</p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">
+                  {formatDate(event.timestamp, 'long')}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500 text-center py-4">No timeline events found</p>
+      )}
+    </Modal>
+  );
+};
+
+// Invoice Modal
+const InvoiceModal = ({ isOpen, onClose, bookingId }) => {
+  const [invoice, setInvoice] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && bookingId) {
+      fetchInvoice();
+    }
+  }, [isOpen, bookingId]);
+
+  const fetchInvoice = async () => {
+    setLoading(true);
+    try {
+      const result = await getMyBookingInvoice(bookingId);
+      if (result.success) {
+        setInvoice(result.data);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch invoice');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (documentId) => {
+    try {
+      await downloadBookingDocument(bookingId, documentId);
+      toast.success('Document downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download document');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Invoice Details" size="lg">
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: COLORS.primary }} />
+          <span className="ml-2 text-sm text-gray-500">Loading invoice...</span>
+        </div>
+      ) : invoice ? (
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Invoice #{invoice.invoiceNumber}</p>
+                <p className="text-xs text-gray-500">Date: {formatDate(invoice.createdAt)}</p>
+              </div>
+              <PricingStatusBadge status={invoice.paymentStatus} />
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-xs text-green-600 mb-1">Total Amount</p>
+            <p className="text-2xl font-bold text-green-700">
+              {formatCurrency(invoice.totalAmount, invoice.currency)}
+            </p>
+          </div>
+
+          {invoice.charges && invoice.charges.length > 0 && (
+            <div className="border rounded-lg p-4">
+              <h5 className="text-sm font-medium text-gray-700 mb-3">Charges</h5>
+              <div className="space-y-2">
+                {invoice.charges.map((charge, index) => (
+                  <div key={index} className="flex justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
+                    <div>
+                      <span className="text-gray-600">{charge.description}</span>
+                      <span className="text-xs text-gray-400 ml-2">({charge.type})</span>
+                    </div>
+                    <span className="font-medium">{formatCurrency(charge.amount, charge.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {invoice._id && (
+            <div className="flex justify-end">
+              <Button
+                variant="light"
+                size="sm"
+                onClick={() => handleDownload(invoice._id)}
+                icon={<Download className="h-4 w-4" />}
+              >
+                Download Invoice
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500 text-center py-4">No invoice found</p>
+      )}
+    </Modal>
+  );
+};
+
+// Quote Details Modal
+const QuoteDetailsModal = ({ isOpen, onClose, bookingId }) => {
+  const [quote, setQuote] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && bookingId) {
+      fetchQuote();
+    }
+  }, [isOpen, bookingId]);
+
+  const fetchQuote = async () => {
+    setLoading(true);
+    try {
+      const result = await getMyBookingQuote(bookingId);
+      if (result.success) {
+        setQuote(result.data);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch quote details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Quote Details" size="md">
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: COLORS.primary }} />
+          <span className="ml-2 text-sm text-gray-500">Loading quote...</span>
+        </div>
+      ) : quote ? (
+        <div className="space-y-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <p className="text-xs text-green-600 mb-1">Quote Amount</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.success }}>
+              {formatCurrency(quote.quotedPrice?.amount, quote.quotedPrice?.currency)}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="border rounded-lg p-3">
+              <p className="text-xs text-gray-500 mb-1">Valid Until</p>
+              <p className="text-sm font-medium">{formatDate(quote.quotedPrice?.validUntil)}</p>
+            </div>
+            <div className="border rounded-lg p-3">
+              <p className="text-xs text-gray-500 mb-1">Status</p>
+              <PricingStatusBadge status={quote.pricingStatus} />
+            </div>
+          </div>
+
+          {quote.quotedPrice?.notes && (
+            <div className="border rounded-lg p-3">
+              <p className="text-xs text-gray-500 mb-1">Notes</p>
+              <p className="text-sm">{quote.quotedPrice.notes}</p>
+            </div>
+          )}
+
+          {quote.quotedPrice?.breakdown && (
+            <div className="border rounded-lg p-3">
+              <p className="text-xs text-gray-500 mb-2">Breakdown</p>
+              <div className="space-y-2">
+                {Object.entries(quote.quotedPrice.breakdown).map(([key, value]) => (
+                  value > 0 && (
+                    <div key={key} className="flex justify-between text-sm">
+                      <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      <span className="font-medium">{formatCurrency(value, quote.quotedPrice.currency)}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500 text-center py-4">No quote details found</p>
+      )}
+    </Modal>
+  );
+};
+
 // Accept/Reject Quote Modal
 const QuoteResponseModal = ({ isOpen, onClose, booking, type, onRespond }) => {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   if (!isOpen || !booking) return null;
+
+  const quoteAmount = booking.quotedPrice?.amount;
+  const quoteCurrency = booking.quotedPrice?.currency || 'USD';
+  const quoteValidUntil = booking.quotedPrice?.validUntil;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -646,18 +739,10 @@ const QuoteResponseModal = ({ isOpen, onClose, booking, type, onRespond }) => {
     
     setLoading(true);
     try {
-      const result = type === 'accept' 
-        ? await acceptQuote(booking._id, notes)
-        : await rejectQuote(booking._id, notes);
-      
-      if (result.success) {
-        toast.success(`Quote ${type}ed successfully!`);
-        onClose(true);
-      } else {
-        toast.error(result.message);
-      }
+      await onRespond(booking._id, notes);
+      onClose(true);
     } catch (error) {
-      toast.error(`Failed to ${type} quote`);
+      // Error handled in parent
     } finally {
       setLoading(false);
     }
@@ -679,9 +764,10 @@ const QuoteResponseModal = ({ isOpen, onClose, booking, type, onRespond }) => {
                   ? 'Are you sure you want to accept this quote?' 
                   : 'Are you sure you want to reject this quote?'}
               </p>
-              {booking.quotedPrice && (
+              {quoteAmount && (
                 <p className="text-xs text-gray-600 mt-1">
-                  Amount: {formatCurrency(booking.quotedPrice.amount, booking.quotedPrice.currency)}
+                  Amount: {formatCurrency(quoteAmount, quoteCurrency)}
+                  {quoteValidUntil && ` • Valid until: ${formatDate(quoteValidUntil)}`}
                 </p>
               )}
             </div>
@@ -734,15 +820,10 @@ const CancelModal = ({ isOpen, onClose, booking, onCancel }) => {
     }
     setLoading(true);
     try {
-      const result = await cancelBooking(booking._id, reason);
-      if (result.success) {
-        toast.success('Booking cancelled successfully!');
-        onClose(true);
-      } else {
-        toast.error(result.message);
-      }
+      await onCancel(booking._id, reason);
+      onClose(true);
     } catch (error) {
-      toast.error('Failed to cancel booking');
+      // Error handled in parent
     } finally {
       setLoading(false);
     }
@@ -796,15 +877,32 @@ const CancelModal = ({ isOpen, onClose, booking, onCancel }) => {
   );
 };
 
-// Booking Details Modal
-const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
+// Booking Details Modal with Action Buttons
+const BookingDetailsModal = ({ isOpen, onClose, booking, onAction }) => {
   const [activeTab, setActiveTab] = useState('details');
   
   if (!isOpen || !booking) return null;
 
-  const cargoTotals = calculateCargoTotals(booking.cargoDetails || []);
+  const packageTotals = calculatePackageTotals(booking.shipmentDetails?.packageDetails || []);
   const quoteValid = booking.quotedPrice ? isQuoteValid(booking.quotedPrice) : false;
   const daysRemaining = booking.quotedPrice ? getQuoteDaysRemaining(booking.quotedPrice.validUntil) : 0;
+
+  // Check if quote actions are available
+  const canAcceptReject = booking.pricingStatus === 'quoted' && 
+                          quoteValid && 
+                          booking.status === 'price_quoted';
+
+  // Check if cancel is available
+  const canCancel = canCancelBooking(booking.status);
+
+  // Check if timeline is available
+  const hasTimeline = true;
+
+  // Check if invoice is available
+  const hasInvoice = booking.invoiceId || booking.pricingStatus === 'accepted';
+
+  // Check if quote details are available
+  const hasQuote = booking.quotedPrice && booking.pricingStatus === 'quoted';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Booking Details" size="xl">
@@ -825,20 +923,158 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
           </div>
         </div>
 
+        {/* Action Buttons Section */}
+        {(canAcceptReject || canCancel || hasTimeline || hasInvoice || hasQuote) && (
+          <div className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-lg border border-gray-200">
+            <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+              <Activity className="h-4 w-4 mr-2" style={{ color: COLORS.primary }} />
+              Available Actions
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              {/* View Timeline Button */}
+              {hasTimeline && (
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={() => {
+                    onClose();
+                    onAction('timeline', booking);
+                  }}
+                  icon={<Clock className="h-4 w-4" />}
+                >
+                  View Timeline
+                </Button>
+              )}
+
+              {/* View Invoice Button */}
+              {hasInvoice && (
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={() => {
+                    onClose();
+                    onAction('invoice', booking);
+                  }}
+                  icon={<Receipt className="h-4 w-4" />}
+                >
+                  View Invoice
+                </Button>
+              )}
+
+              {/* View Quote Button */}
+              {hasQuote && (
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={() => {
+                    onClose();
+                    onAction('quote', booking);
+                  }}
+                  icon={<Tag className="h-4 w-4" />}
+                >
+                  View Quote
+                </Button>
+              )}
+
+              {/* Accept/Reject Quote Buttons */}
+              {canAcceptReject && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={() => {
+                      onClose();
+                      onAction('accept', booking);
+                    }}
+                    icon={<ThumbsUp className="h-4 w-4" />}
+                  >
+                    Accept Quote
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => {
+                      onClose();
+                      onAction('reject', booking);
+                    }}
+                    icon={<ThumbsDown className="h-4 w-4" />}
+                  >
+                    Reject Quote
+                  </Button>
+                </>
+              )}
+
+              {/* Cancel Booking Button */}
+              {canCancel && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => {
+                    onClose();
+                    onAction('cancel', booking);
+                  }}
+                  icon={<Ban className="h-4 w-4" />}
+                >
+                  Cancel Booking
+                </Button>
+              )}
+
+              {/* Copy Tracking Button */}
+              {booking.trackingNumber && (
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={() => {
+                    navigator.clipboard.writeText(booking.trackingNumber);
+                    toast.success('Tracking number copied!');
+                  }}
+                  icon={<Copy className="h-4 w-4" />}
+                >
+                  Copy Tracking
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <ProgressBar progress={STATUS_CONFIG[booking.status]?.progress || 0} showLabel={true} />
+        </div>
+
+        {/* Quote Expiry Warning */}
+        {booking.pricingStatus === 'quoted' && booking.quotedPrice && (
+          <div className={`p-3 rounded-lg ${quoteValid ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className="flex items-center">
+              {quoteValid ? (
+                <Info className="h-4 w-4 text-green-600 mr-2" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600 mr-2" />
+              )}
+              <span className={`text-xs ${quoteValid ? 'text-green-700' : 'text-red-700'}`}>
+                {quoteValid 
+                  ? `Quote valid for ${daysRemaining} more days` 
+                  : 'Quote has expired'}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <nav className="flex space-x-4 overflow-x-auto pb-1">
             {[
               { id: 'details', label: 'Details', icon: Package },
-              { id: 'cargo', label: 'Cargo', icon: Box },
-              { id: 'pricing', label: 'Pricing', icon: DollarSign }
+              { id: 'package', label: 'Package', icon: Box },
+              { id: 'pricing', label: 'Pricing', icon: DollarSign },
+              { id: 'tracking', label: 'Tracking', icon: Hash }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-[#E67E22] text-[#E67E22]'
+                    ? `border-[${COLORS.primary}] text-[${COLORS.primary}]`
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -853,20 +1089,69 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
         <div className="min-h-[300px]">
           {activeTab === 'details' && (
             <div className="space-y-4">
-              {/* Route */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              {/* Sender & Receiver */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-lg p-4">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                    <User className="h-4 w-4 mr-2" style={{ color: COLORS.primary }} />
+                    Sender Information
+                  </h5>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">{getSenderName(booking.sender)}</p>
+                    {booking.sender?.email && (
+                      <p className="text-xs text-gray-500 flex items-center">
+                        <Mail className="h-3 w-3 mr-1" /> {booking.sender.email}
+                      </p>
+                    )}
+                    {booking.sender?.phone && (
+                      <p className="text-xs text-gray-500 flex items-center">
+                        <Phone className="h-3 w-3 mr-1" /> {booking.sender.phone}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      {formatAddress(booking.sender?.address)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                    <UserPlus className="h-4 w-4 mr-2" style={{ color: COLORS.primary }} />
+                    Receiver Information
+                  </h5>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">{getReceiverName(booking.receiver)}</p>
+                    {booking.receiver?.email && (
+                      <p className="text-xs text-gray-500 flex items-center">
+                        <Mail className="h-3 w-3 mr-1" /> {booking.receiver.email}
+                      </p>
+                    )}
+                    {booking.receiver?.phone && (
+                      <p className="text-xs text-gray-500 flex items-center">
+                        <Phone className="h-3 w-3 mr-1" /> {booking.receiver.phone}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      {formatAddress(booking.receiver?.address)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Route & Dates */}
+              <div className="border rounded-lg p-4">
                 <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                  <MapPin className="h-4 w-4 mr-2 text-[#E67E22]" />
+                  <MapPin className="h-4 w-4 mr-2" style={{ color: COLORS.primary }} />
                   Route Information
                 </h5>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500">Origin</p>
-                    <p className="text-sm font-medium">{getOriginDisplay(booking.shipmentDetails?.origin) || 'N/A'}</p>
+                    <p className="text-sm font-medium">{booking.shipmentDetails?.origin || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Destination</p>
-                    <p className="text-sm font-medium">{getDestinationDisplay(booking.shipmentDetails?.destination) || 'N/A'}</p>
+                    <p className="text-sm font-medium">{booking.shipmentDetails?.destination || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Shipment Type</p>
@@ -874,90 +1159,80 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Shipping Mode</p>
-                    <p className="text-sm font-medium">{getShippingModeDisplay(booking.shipmentDetails?.shippingMode) || 'N/A'}</p>
+                    <p className="text-sm font-medium">{booking.shipmentDetails?.shippingMode || 'N/A'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Tracking */}
-              {booking.trackingNumber && (
+              {/* Courier Info */}
+              {booking.courier && (
                 <div className="border rounded-lg p-4">
                   <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                    <Hash className="h-4 w-4 mr-2 text-[#E67E22]" />
-                    Tracking Information
+                    <Truck className="h-4 w-4 mr-2" style={{ color: COLORS.primary }} />
+                    Courier Information
                   </h5>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500">Tracking Number</p>
-                      <p className="text-sm font-medium">{booking.trackingNumber}</p>
-                    </div>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      onClick={() => {
-                        navigator.clipboard.writeText(booking.trackingNumber);
-                        toast.success('Tracking number copied!');
-                      }}
-                      icon={<Copy className="h-3 w-3" />}
-                    >
-                      Copy
-                    </Button>
-                  </div>
+                  <p className="text-sm">
+                    {booking.courier.company} - {booking.courier.serviceType}
+                  </p>
                 </div>
               )}
             </div>
           )}
 
-          {activeTab === 'cargo' && (
+          {activeTab === 'package' && (
             <div className="space-y-4">
-              {/* Cargo Summary */}
+              {/* Package Summary */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-xs text-gray-500">Total Cartons</p>
-                  <p className="text-2xl font-semibold text-[#E67E22]">
-                    {cargoTotals.totalCartons}
+                  <p className="text-xs text-gray-500">Total Packages</p>
+                  <p className="text-2xl font-semibold" style={{ color: COLORS.primary }}>
+                    {packageTotals.totalPackages}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
                   <p className="text-xs text-gray-500">Total Weight (kg)</p>
-                  <p className="text-2xl font-semibold text-[#3C719D]">
-                    {cargoTotals.totalWeight.toFixed(1)}
+                  <p className="text-2xl font-semibold" style={{ color: COLORS.secondary }}>
+                    {packageTotals.totalWeight.toFixed(1)}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
                   <p className="text-xs text-gray-500">Total Volume (cbm)</p>
-                  <p className="text-2xl font-semibold text-green-600">
-                    {cargoTotals.totalVolume.toFixed(2)}
+                  <p className="text-2xl font-semibold" style={{ color: COLORS.success }}>
+                    {packageTotals.totalVolume.toFixed(2)}
                   </p>
                 </div>
               </div>
 
-              {/* Cargo Details Table */}
-              {booking.cargoDetails && booking.cargoDetails.length > 0 ? (
+              {/* Package Details Table */}
+              {booking.shipmentDetails?.packageDetails && booking.shipmentDetails.packageDetails.length > 0 ? (
                 <div className="border rounded-lg overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Description</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Cartons</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qty</th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Weight/Unit</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Volume/Unit</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Dimensions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {booking.cargoDetails.map((item, index) => (
+                      {booking.shipmentDetails.packageDetails.map((item, index) => (
                         <tr key={index}>
                           <td className="px-4 py-2 text-sm">{item.description}</td>
-                          <td className="px-4 py-2 text-sm">{item.cartons}</td>
+                          <td className="px-4 py-2 text-sm">{item.quantity}</td>
                           <td className="px-4 py-2 text-sm">{item.weight} kg</td>
-                          <td className="px-4 py-2 text-sm">{item.volume} cbm</td>
+                          <td className="px-4 py-2 text-sm">
+                            {item.dimensions?.length && item.dimensions?.width && item.dimensions?.height ? (
+                              `${item.dimensions.length}x${item.dimensions.width}x${item.dimensions.height} cm`
+                            ) : 'N/A'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No cargo details available</p>
+                <p className="text-sm text-gray-500 text-center py-4">No package details available</p>
               )}
             </div>
           )}
@@ -968,7 +1243,7 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
                 <>
                   <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
                     <p className="text-xs text-green-600 mb-1">Quoted Amount</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold" style={{ color: COLORS.success }}>
                       {formatCurrency(booking.quotedPrice.amount, booking.quotedPrice.currency)}
                     </p>
                     <div className="mt-2">
@@ -981,6 +1256,22 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
                       )}
                     </div>
                   </div>
+
+                  {booking.quotedPrice.breakdown && (
+                    <div className="border rounded-lg p-4">
+                      <h5 className="text-sm font-medium text-gray-700 mb-3">Breakdown</h5>
+                      <div className="space-y-2">
+                        {Object.entries(booking.quotedPrice.breakdown).map(([key, value]) => (
+                          value > 0 && (
+                            <div key={key} className="flex justify-between text-sm">
+                              <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                              <span className="font-medium">{formatCurrency(value, booking.quotedPrice.currency)}</span>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {booking.quotedPrice.notes && (
                     <div className="border rounded-lg p-3">
@@ -997,8 +1288,58 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
               )}
             </div>
           )}
+
+          {activeTab === 'tracking' && (
+            <div className="space-y-4">
+              {booking.trackingNumber ? (
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-xs text-blue-600 mb-1">Tracking Number</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-semibold text-blue-700">{booking.trackingNumber}</p>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => {
+                          navigator.clipboard.writeText(booking.trackingNumber);
+                          toast.success('Tracking number copied!');
+                        }}
+                        icon={<Copy className="h-3 w-3" />}
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+
+                  {booking.currentLocation && (
+                    <div className="border rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Current Location</p>
+                      <p className="text-sm font-medium">{booking.currentLocation.location}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Last updated: {formatDate(booking.currentLocation.timestamp)}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <Hash className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No tracking number assigned yet</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
+        {/* Special Instructions */}
+        {booking.shipmentDetails?.specialInstructions && (
+          <div className="border rounded-lg p-4">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Special Instructions</h5>
+            <p className="text-sm text-gray-600">{booking.shipmentDetails.specialInstructions}</p>
+          </div>
+        )}
+
+        {/* Footer */}
         <div className="flex justify-end pt-4 border-t">
           <Button
             variant="light"
@@ -1010,6 +1351,122 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
         </div>
       </div>
     </Modal>
+  );
+};
+
+// Booking Card Component
+const BookingCard = ({ booking, onView, onAction }) => {
+  const packageTotals = calculatePackageTotals(booking.shipmentDetails?.packageDetails || []);
+  const quoteValid = booking.quotedPrice ? isQuoteValid(booking.quotedPrice) : false;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
+    >
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <div className="flex items-center">
+              <h3 
+                className="text-sm font-semibold cursor-pointer hover:underline text-[#E67E22]"
+                onClick={() => onView(booking)}
+              >
+                #{booking.bookingNumber || booking._id?.slice(-8).toUpperCase()}
+              </h3>
+              {booking.trackingNumber && (
+                <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                  {booking.trackingNumber}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Route */}
+        <div className="flex items-center text-xs mb-3 p-2 bg-gray-50 rounded-lg">
+          <span className="font-medium text-gray-900">
+            {booking.shipmentDetails?.origin || 'N/A'}
+          </span>
+          <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
+          <span className="font-medium text-gray-900">
+            {booking.shipmentDetails?.destination || 'N/A'}
+          </span>
+        </div>
+
+        {/* Details Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div>
+            <p className="text-xs text-gray-500">Type</p>
+            <ShipmentTypeBadge type={booking.shipmentDetails?.shipmentType} />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Created</p>
+            <p className="text-xs font-medium">{formatDate(booking.createdAt, 'short')}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Packages</p>
+            <p className="text-xs font-medium">
+              {packageTotals.totalPackages} pkg • {packageTotals.totalWeight.toFixed(1)} kg
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Quote</p>
+            {booking.quotedPrice ? (
+              <p className="text-xs font-medium text-green-600">
+                {formatCurrency(booking.quotedPrice.amount, booking.quotedPrice.currency)}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400">Pending</p>
+            )}
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center justify-between pt-2 border-t">
+          <StatusBadge status={booking.status} size="sm" />
+          <PricingStatusBadge status={booking.pricingStatus} />
+        </div>
+
+        {/* Quick Action Buttons */}
+        <div className="mt-3 flex space-x-2">
+          <Button
+            size="xs"
+            variant="light"
+            onClick={() => onView(booking)}
+            icon={<Eye className="h-3 w-3" />}
+            fullWidth
+          >
+            Details
+          </Button>
+          {booking.pricingStatus === 'quoted' && quoteValid && booking.status === 'price_quoted' && (
+            <>
+              <Button
+                size="xs"
+                variant="success"
+                onClick={() => onAction('accept', booking)}
+                icon={<ThumbsUp className="h-3 w-3" />}
+                fullWidth
+              >
+                Accept
+              </Button>
+              <Button
+                size="xs"
+                variant="danger"
+                onClick={() => onAction('reject', booking)}
+                icon={<ThumbsDown className="h-3 w-3" />}
+                fullWidth
+              >
+                Reject
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
@@ -1031,19 +1488,35 @@ export default function CustomerBookingsPage() {
     page: 1,
     limit: 10,
     status: '',
+    search: '',
     sort: '-createdAt'
   });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeStat, setActiveStat] = useState('all');
 
   // Modal States
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showTimelineModal, setShowTimelineModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // Stats
+  const [stats, setStats] = useState({
+    total: 0,
+    booking_requested: 0,
+    price_quoted: 0,
+    booking_confirmed: 0,
+    in_transit: 0,
+    delivered: 0,
+    cancelled: 0
+  });
 
   // Options
   const statusOptions = [
@@ -1062,20 +1535,58 @@ export default function CustomerBookingsPage() {
   ];
 
   // Fetch Bookings
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getMyBookings(filters);
-      console.log('Bookings response:', response); // Debug log
+      const queryParams = {
+        page: filters.page,
+        limit: filters.limit,
+        status: filters.status,
+        sort: filters.sort
+      };
+
+      if (filters.search) {
+        queryParams.search = filters.search;
+      }
+
+      const response = await getMyBookings(queryParams);
       
       if (response.success) {
         setBookings(response.data || []);
+        setSummary(response.summary || null);
         setPagination(response.pagination || {
           total: response.data?.length || 0,
           page: 1,
           limit: 10,
           pages: 1
         });
+
+        // Calculate stats
+        const newStats = {
+          total: response.data?.length || 0,
+          booking_requested: 0,
+          price_quoted: 0,
+          booking_confirmed: 0,
+          in_transit: 0,
+          delivered: 0,
+          cancelled: 0
+        };
+
+        if (response.data && response.data.length > 0) {
+          response.data.forEach(booking => {
+            if (newStats.hasOwnProperty(booking.status)) {
+              newStats[booking.status]++;
+            }
+            if (booking.status === 'in_transit' || 
+                booking.status === 'arrived_at_destination' || 
+                booking.status === 'customs_clearance' || 
+                booking.status === 'out_for_delivery') {
+              newStats.in_transit++;
+            }
+          });
+        }
+
+        setStats(newStats);
       } else {
         toast.error(response.message || 'Failed to fetch bookings');
       }
@@ -1085,36 +1596,44 @@ export default function CustomerBookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Fetch Summary
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       const response = await getMyBookingsSummary();
-      console.log('Summary response:', response); // Debug log
-      
       if (response.success) {
         setSummary(response.data);
       }
     } catch (error) {
       console.error('Failed to fetch summary:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBookings();
     fetchSummary();
-  }, [filters.page, filters.limit, filters.sort]);
+  }, [fetchBookings, fetchSummary]);
 
   // Handle Filter Change
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+  const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value, page: 1 }));
+    
+    if (name === 'status' && value) {
+      setActiveStat('all');
+    }
+  };
+
+  // Handle Input Change
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    handleFilterChange(name, value);
   };
 
   // Handle Search
-  const handleSearch = () => {
-    // Implement search logic if needed
+  const handleSearch = (e) => {
+    e.preventDefault();
+    handleFilterChange('search', searchTerm);
   };
 
   // Clear Filters
@@ -1123,9 +1642,11 @@ export default function CustomerBookingsPage() {
       page: 1,
       limit: 10,
       status: '',
+      search: '',
       sort: '-createdAt'
     });
     setSearchTerm('');
+    setActiveStat('all');
     toast.info('Filters cleared');
   };
 
@@ -1140,6 +1661,18 @@ export default function CustomerBookingsPage() {
     setSelectedBooking(booking);
     
     switch (action) {
+      case 'view':
+        setShowDetailsModal(true);
+        break;
+      case 'timeline':
+        setShowTimelineModal(true);
+        break;
+      case 'invoice':
+        setShowInvoiceModal(true);
+        break;
+      case 'quote':
+        setShowQuoteModal(true);
+        break;
       case 'accept':
         setShowAcceptModal(true);
         break;
@@ -1154,53 +1687,84 @@ export default function CustomerBookingsPage() {
     }
   };
 
-  // After modal actions, refresh data
+  // Handle Accept Quote
+  const handleAcceptQuote = async (bookingId, notes) => {
+    try {
+      const result = await acceptQuote(bookingId, notes);
+      if (result.success) {
+        toast.success('Quote accepted successfully!');
+        fetchBookings();
+        fetchSummary();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to accept quote');
+    }
+  };
+
+  // Handle Reject Quote
+  const handleRejectQuote = async (bookingId, reason) => {
+    try {
+      const result = await rejectQuote(bookingId, reason);
+      if (result.success) {
+        toast.success('Quote rejected successfully!');
+        fetchBookings();
+        fetchSummary();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to reject quote');
+    }
+  };
+
+  // Handle Cancel Booking
+  const handleCancelBooking = async (bookingId, reason) => {
+    try {
+      const result = await cancelBooking(bookingId, reason);
+      if (result.success) {
+        toast.success('Booking cancelled successfully!');
+        fetchBookings();
+        fetchSummary();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to cancel booking');
+    }
+  };
+
+  // After modal actions
   const handleModalClose = (shouldRefresh = true) => {
+    setShowDetailsModal(false);
+    setShowTimelineModal(false);
+    setShowInvoiceModal(false);
+    setShowQuoteModal(false);
     setShowAcceptModal(false);
     setShowRejectModal(false);
     setShowCancelModal(false);
-    setShowDetailsModal(false);
     if (shouldRefresh) {
       fetchBookings();
       fetchSummary();
     }
   };
 
-  // Calculate stats
-  const totalBookings = bookings?.length || 0;
-  const activeBookings = bookings?.filter(b => 
-    !['delivered', 'cancelled', 'rejected'].includes(b.status)
-  ).length || 0;
-  const pendingQuotes = bookings?.filter(b => 
-    b.pricingStatus === 'quoted' && b.status === 'price_quoted'
-  ).length || 0;
-  const delivered = bookings?.filter(b => b.status === 'delivered').length || 0;
+  // Filter by status
+  const filterByStatus = (status) => {
+    setActiveStat(status);
+    handleFilterChange('status', status === 'all' ? '' : status);
+  };
 
-  const stats = [
-    { 
-      title: 'Total Bookings', 
-      value: totalBookings, 
-      icon: Package, 
-      color: 'bg-blue-100 text-blue-600' 
-    },
-    { 
-      title: 'Active Bookings', 
-      value: activeBookings, 
-      icon: TrendingUp, 
-      color: 'bg-green-100 text-green-600' 
-    },
-    { 
-      title: 'Pending Quotes', 
-      value: pendingQuotes, 
-      icon: Clock, 
-      color: 'bg-yellow-100 text-yellow-600' 
-    },
-    { 
-      title: 'Delivered', 
-      value: delivered, 
-      icon: CheckCircleSolid, 
-      color: 'bg-purple-100 text-purple-600' 
-    }
+  // Visible stats
+  const visibleStats = [
+    { key: 'all', label: 'All', value: stats.total, icon: Package, color: 'bg-gray-100 text-gray-600' },
+    { key: 'booking_requested', label: 'Requested', value: stats.booking_requested, icon: Clock, color: 'bg-blue-100 text-blue-600' },
+    { key: 'price_quoted', label: 'Price Quoted', value: stats.price_quoted, icon: Tag, color: 'bg-yellow-100 text-yellow-600' },
+    { key: 'booking_confirmed', label: 'Confirmed', value: stats.booking_confirmed, icon: CheckCircle, color: 'bg-indigo-100 text-indigo-600' },
+    { key: 'in_transit', label: 'In Transit', value: stats.in_transit, icon: Truck, color: 'bg-cyan-100 text-cyan-600' },
+    { key: 'delivered', label: 'Delivered', value: stats.delivered, icon: CheckCircleSolid, color: 'bg-green-100 text-green-600' },
+    { key: 'cancelled', label: 'Cancelled', value: stats.cancelled, icon: XCircleSolid, color: 'bg-red-100 text-red-600' }
   ];
 
   return (
@@ -1211,13 +1775,13 @@ export default function CustomerBookingsPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-100">
-                  <Package className="h-4 w-4 text-[#E67E22]" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: COLORS.primaryLight }}>
+                  <Package className="h-4 w-4" style={{ color: COLORS.primary }} />
                 </div>
                 <h1 className="ml-2 text-lg font-semibold text-gray-900">My Shipments</h1>
               </div>
               <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                {totalBookings} Total
+                {stats.total} Total
               </span>
             </div>
             
@@ -1241,7 +1805,7 @@ export default function CustomerBookingsPage() {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => router.push('/bookings/new')}
+                onClick={() => router.push('/bookings/create')}
                 icon={<Plus className="h-4 w-4" />}
               >
                 New Booking
@@ -1254,9 +1818,17 @@ export default function CustomerBookingsPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {stats.map((stat, index) => (
-            <StatCard key={index} {...stat} />
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+          {visibleStats.map((stat) => (
+            <StatCard
+              key={stat.key}
+              title={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              active={activeStat === stat.key}
+              onClick={() => filterByStatus(stat.key)}
+            />
           ))}
         </div>
 
@@ -1264,30 +1836,29 @@ export default function CustomerBookingsPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
           <div className="p-4">
             <div className="flex items-center space-x-2">
-              <div className="flex-1">
+              <form onSubmit={handleSearch} className="flex-1">
                 <Input
                   type="text"
                   placeholder="Search by booking number or tracking number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   icon={Search}
                 />
-              </div>
+              </form>
               <Button
                 variant={showFilters ? 'primary' : 'light'}
                 size="md"
                 onClick={() => setShowFilters(!showFilters)}
-                icon={<Filter className="h-4 w-4" />}
+                icon={<FilterIcon className="h-4 w-4" />}
               >
                 Filters
                 {(filters.status || filters.sort !== '-createdAt') && (
                   <span className="ml-2 bg-white text-[#E67E22] rounded-full px-2 py-0.5 text-xs">
-                    {Object.values(filters).filter(v => v && v !== 10 && v !== '-createdAt').length}
+                    {Object.values(filters).filter(v => v && v !== '' && v !== 10 && v !== '-createdAt').length}
                   </span>
                 )}
               </Button>
-              {(filters.status !== '' || filters.sort !== '-createdAt' || searchTerm) && (
+              {(filters.search || filters.status || filters.sort !== '-createdAt') && (
                 <Button
                   variant="light"
                   size="md"
@@ -1314,7 +1885,7 @@ export default function CustomerBookingsPage() {
                 <Select
                   name="status"
                   value={filters.status}
-                  onChange={handleFilterChange}
+                  onChange={handleInputChange}
                   options={statusOptions}
                   label="Status"
                   icon={Activity}
@@ -1323,7 +1894,7 @@ export default function CustomerBookingsPage() {
                 <Select
                   name="sort"
                   value={filters.sort}
-                  onChange={handleFilterChange}
+                  onChange={handleInputChange}
                   options={sortOptions}
                   label="Sort By"
                   icon={ArrowUpDown}
@@ -1335,22 +1906,29 @@ export default function CustomerBookingsPage() {
 
         {/* Bookings Grid/List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#E67E22]" />
-            <span className="ml-2 text-sm text-gray-500">Loading your shipments...</span>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12">
+            <div className="flex flex-col items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-[#E67E22]" />
+              <p className="mt-4 text-sm text-gray-500">Loading your shipments...</p>
+            </div>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
-            <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No shipments found</h3>
-            <p className="text-sm text-gray-500 mb-6">You haven't created any shipments yet.</p>
-            <Button
-              variant="primary"
-              onClick={() => router.push('/bookings/new')}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Create Your First Shipment
-            </Button>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12">
+            <div className="flex flex-col items-center justify-center">
+              <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <Package className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">No shipments found</h3>
+              <p className="mt-1 text-sm text-gray-500">You haven't created any shipments yet.</p>
+              <Button
+                variant="primary"
+                onClick={() => router.push('/bookings/create')}
+                className="mt-4"
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Create Your First Shipment
+              </Button>
+            </div>
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1370,7 +1948,7 @@ export default function CustomerBookingsPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking #</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Route</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
@@ -1400,9 +1978,9 @@ export default function CustomerBookingsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center text-xs">
-                          <span>{getOriginDisplay(booking.shipmentDetails?.origin) || 'N/A'}</span>
+                          <span>{booking.shipmentDetails?.origin || 'N/A'}</span>
                           <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
-                          <span>{getDestinationDisplay(booking.shipmentDetails?.destination) || 'N/A'}</span>
+                          <span>{booking.shipmentDetails?.destination || 'N/A'}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -1425,6 +2003,13 @@ export default function CustomerBookingsPage() {
                             title="View Details"
                           >
                             <Eye className="h-4 w-4 text-gray-500" />
+                          </button>
+                          <button
+                            onClick={() => handleAction('timeline', booking)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="View Timeline"
+                          >
+                            <Clock className="h-4 w-4 text-gray-500" />
                           </button>
                           {booking.pricingStatus === 'quoted' && quoteValid && booking.status === 'price_quoted' && (
                             <>
@@ -1475,7 +2060,7 @@ export default function CustomerBookingsPage() {
               <Select
                 name="limit"
                 value={filters.limit}
-                onChange={handleFilterChange}
+                onChange={handleInputChange}
                 options={[
                   { value: 10, label: '10 / page' },
                   { value: 20, label: '20 / page' },
@@ -1529,6 +2114,25 @@ export default function CustomerBookingsPage() {
         isOpen={showDetailsModal}
         onClose={() => handleModalClose(false)}
         booking={selectedBooking}
+        onAction={handleAction}
+      />
+
+      <TimelineModal
+        isOpen={showTimelineModal}
+        onClose={() => handleModalClose(false)}
+        bookingId={selectedBooking?._id}
+      />
+
+      <InvoiceModal
+        isOpen={showInvoiceModal}
+        onClose={() => handleModalClose(false)}
+        bookingId={selectedBooking?._id}
+      />
+
+      <QuoteDetailsModal
+        isOpen={showQuoteModal}
+        onClose={() => handleModalClose(false)}
+        bookingId={selectedBooking?._id}
       />
 
       <QuoteResponseModal
@@ -1536,6 +2140,7 @@ export default function CustomerBookingsPage() {
         onClose={handleModalClose}
         booking={selectedBooking}
         type="accept"
+        onRespond={handleAcceptQuote}
       />
 
       <QuoteResponseModal
@@ -1543,12 +2148,14 @@ export default function CustomerBookingsPage() {
         onClose={handleModalClose}
         booking={selectedBooking}
         type="reject"
+        onRespond={handleRejectQuote}
       />
 
       <CancelModal
         isOpen={showCancelModal}
         onClose={handleModalClose}
         booking={selectedBooking}
+        onCancel={handleCancelBooking}
       />
     </div>
   );
